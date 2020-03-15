@@ -101,7 +101,7 @@ We find an $R^2$ value of `r round(summary(fit_lm_exp)$r.squared,4)`
 
 # Fitting into the future, assuming* exponential growth continues
 
-* of course, exponential growth never continues indefinitely in population models. 
+\* of course, exponential growth never continues indefinitely in population models. 
 Eventually, you will either run out of new susceptible people to infect. Or, 
 we can intervene in disease spread, and deviate from this continued growth. 
 
