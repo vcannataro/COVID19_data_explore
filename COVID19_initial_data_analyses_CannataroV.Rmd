@@ -1,0 +1,142 @@
+---
+title: "COVID19 data exploration"
+author: "Vincent L. Cannataro"
+date: "March 15, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+
+Data obtained from curated Johns Hopkins University Center for Systems Science and Engineering database here: https://github.com/CSSEGISandData/COVID-19.git
+
+
+```{r get data, include=F}
+jhu_data <- read.csv(check.names = F,
+  file = "JHU_COVID19_data/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
+
+# clean data types prior to melting
+jhu_data <- jhu_data %>%
+  mutate_if(is.numeric,as.character, 
+            is.factor, as.character)
+
+jhu_data_m <- tidyr::pivot_longer(data = jhu_data, 
+                                  cols=`1/22/20`:colnames(jhu_data)[ncol(jhu_data)], 
+                                  values_to = "Confirmed_cases",names_to = "Date") %>%
+  mutate(Confirmed_cases = as.numeric(Confirmed_cases))
+
+jhu_data_m <- jhu_data_m %>%
+  mutate(Date = as.Date(Date, format= "%m/%d/%y"))
+
+
+
+```
+
+# Current USA confirmed cases
+
+
+```{r USA data, include=F}
+
+
+US_data <- jhu_data_m %>% 
+  filter(`Country/Region` %in% c("US")) %>%
+  group_by(`Country/Region`,Date) %>%
+  summarize(all_cases = sum(Confirmed_cases)) %>%
+  filter(!is.na(all_cases)) 
+
+```
+
+
+The total number of confirmed cases in the USA by date: 
+
+```{r, echo=T}
+DT::datatable(US_data)
+```
+
+
+
+
+It looks like the total number of confirmed cases in the USA is currently growing exponentially. 
+
+```{r,echo=F}
+ggplot(data = US_data) + 
+  geom_point(aes(x=Date, y=all_cases,color=`Country/Region`)) + 
+  theme_classic()  + 
+  labs(y="All confirmed cases") 
+
+ggplot(data = US_data) + 
+  geom_point(aes(x=Date, y=all_cases,color=`Country/Region`)) + 
+  theme_classic()  + 
+  labs(y="All confirmed cases, log10 scale") + 
+  scale_y_log10()
+```
+
+```{r, include=F}
+
+start_date <- as.Date(x = "03/01/2020",format= "%m/%d/%y")
+
+end_date <- as.Date(x = "04/12/2020",format= "%m/%d/%y")
+
+```
+
+
+
+Indeed, if we pull out the data from `r start_date` until the current date, and 
+fit a linear model to the log10(y) ~ x, 
+
+```{r exp fit}
+start_date
+
+fit_lm_exp <- lm(formula = log10(all_cases) ~ Date, 
+                 data = subset(US_data,Date>start_date))
+
+summary(fit_lm_exp)$r.squared
+
+```
+
+We find an $R^2$ value of `r round(summary(fit_lm_exp)$r.squared,4)`
+
+# Fitting into the future, assuming* exponential growth continues
+
+* of course, exponential growth never continues indefinitely in population models. 
+Eventually, you will either run out of new susceptible people to infect. Or, 
+we can intervene in disease spread, and deviate from this continued growth. 
+
+But, let's assume exponential growth continues. What would happen to the number of 
+confirmed cases over time?
+
+We can use our fit to the recent data generated above to predict into the future.
+
+```{r future fit}
+end_date
+
+# fitting into the future 
+future_predictions <- data.frame(Date = seq(start_date,end_date,by = "1 day"))
+
+future_predictions$log10_count <- predict(fit_lm_exp,newdata = future_predictions)
+
+```
+
+
+```{r fitting into the future plot, echo=F}
+
+ggplot(data = US_data) + 
+  geom_point(aes(x=Date, y=log10(all_cases),color=`Country/Region`)) + 
+  geom_line(data = future_predictions, aes(x=Date,y=log10_count),linetype="dashed") + 
+  theme_classic()  + 
+  labs(y="log10(All confirmed cases)") + 
+  scale_x_date(date_breaks = "2 days",date_labels = "%b %d") + 
+  theme(axis.text.x = element_text(angle=90))
+```
+
+
+Keep in mind, that the axis above is on a log10 scale, meaning that $6$ on the axis
+is really $1000000$
+
+*Let's do everything we can do deviate from this fit!*
+
+
+
