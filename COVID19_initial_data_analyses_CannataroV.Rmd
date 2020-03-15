@@ -65,12 +65,14 @@ It looks like the total number of confirmed cases in the USA is currently growin
 ggplot(data = US_data) + 
   geom_point(aes(x=Date, y=all_cases,color=`Country/Region`)) + 
   theme_classic()  + 
-  labs(y="All confirmed cases") 
+  labs(y="All confirmed cases") + 
+  labs(title="Confirmed cases in the USA") 
 
 ggplot(data = US_data) + 
   geom_point(aes(x=Date, y=all_cases,color=`Country/Region`)) + 
   theme_classic()  + 
   labs(y="All confirmed cases, log10 scale") + 
+  labs(title="Confirmed cases in the USA, Y axis log10 scaled") + 
   scale_y_log10()
 ```
 
@@ -129,7 +131,8 @@ ggplot(data = US_data) +
   theme_classic()  + 
   labs(y="log10(All confirmed cases)") + 
   scale_x_date(date_breaks = "2 days",date_labels = "%b %d") + 
-  theme(axis.text.x = element_text(angle=90))
+  theme(axis.text.x = element_text(angle=90)) + 
+  labs(title="Confirmed cases in the USA, including a simple prediction")
 ```
 
 
@@ -139,4 +142,18 @@ is really $1000000$
 *Let's do everything we can do deviate from this fit!*
 
 
+```{r, include=F}
+fit_plot <- ggplot(data = US_data) + 
+  geom_point(aes(x=Date, y=log10(all_cases),color=`Country/Region`)) + 
+  geom_line(data = future_predictions, aes(x=Date,y=log10_count),linetype="dashed") + 
+  theme_classic()  + 
+  labs(y="log10(All confirmed cases)") + 
+  scale_x_date(date_breaks = "2 days",date_labels = "%b %d") + 
+  theme(axis.text.x = element_text(angle=90)) + 
+  labs(title="Confirmed cases in the USA, including a simple prediction")
+
+ggplot2::ggsave(plot = fit_plot,
+                filename = "output_data/figures/fit_plot.pdf",width = 7,height = 5)
+
+```
 
