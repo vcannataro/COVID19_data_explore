@@ -1,6 +1,8 @@
 These data are cleaned from the data available from 
 https://github.com/CSSEGISandData/COVID-19
 
+The cleaning file is cleaning_data_for_export.R in the main directory. 
+
 Terms of use copied from https://github.com/CSSEGISandData/COVID-19
 
 <b>Terms of Use:</b><br>

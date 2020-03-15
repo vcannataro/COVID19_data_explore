@@ -58,7 +58,7 @@ jhu_data <- jhu_data %>%
 jhu_data_m <- tidyr::pivot_longer(data = jhu_data, 
                                   cols=`1/22/20`:colnames(jhu_data)[ncol(jhu_data)], 
                                   values_to = "Deaths",names_to = "Date") %>%
-  mutate(Confirmed_cases = as.numeric(Confirmed_cases))
+  mutate(Deaths = as.numeric(Deaths))
 
 jhu_data_m <- jhu_data_m %>%
   mutate(Date = as.Date(Date, format= "%m/%d/%y"))
@@ -69,7 +69,7 @@ for(country in 1:length(countries_unique)){
   this_df <-  jhu_data_m %>% 
     filter(`Country/Region` == countries_unique[country]) %>%
     group_by(`Country/Region`,Date) %>%
-    summarize(all_cases = sum(Confirmed_cases)) %>%
+    summarize(all_cases = sum(Deaths)) %>%
     filter(!is.na(all_cases)) 
   
   country_for_save <- gsub(x = as.character(countries_unique[country]),replacement = "_",pattern = " ")
@@ -94,7 +94,7 @@ jhu_data <- jhu_data %>%
 jhu_data_m <- tidyr::pivot_longer(data = jhu_data, 
                                   cols=`1/22/20`:colnames(jhu_data)[ncol(jhu_data)], 
                                   values_to = "Recovered",names_to = "Date") %>%
-  mutate(Confirmed_cases = as.numeric(Confirmed_cases))
+  mutate(Recovered = as.numeric(Recovered))
 
 jhu_data_m <- jhu_data_m %>%
   mutate(Date = as.Date(Date, format= "%m/%d/%y"))
@@ -105,7 +105,7 @@ for(country in 1:length(countries_unique)){
   this_df <-  jhu_data_m %>% 
     filter(`Country/Region` == countries_unique[country]) %>%
     group_by(`Country/Region`,Date) %>%
-    summarize(all_cases = sum(Confirmed_cases)) %>%
+    summarize(all_cases = sum(Recovered)) %>%
     filter(!is.na(all_cases)) 
   
   country_for_save <- gsub(x = as.character(countries_unique[country]),replacement = "_",pattern = " ")
