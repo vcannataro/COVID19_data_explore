@@ -95,11 +95,13 @@ start_date
 fit_lm_exp <- lm(formula = log10(all_cases) ~ Date, 
                  data = subset(US_data,Date>start_date))
 
-summary(fit_lm_exp)$r.squared
+# summary(fit_lm_exp)$r.squared # removed r.squared because 
+# it is not a correct statistic on this time series data 
+# https://twitter.com/vsbuffalo/status/1239233074203746304 
 
 ```
 
-We find an $R^2$ value of `r round(summary(fit_lm_exp)$r.squared,4)`
+<!-- We find an $R^2$ value of `r round(summary(fit_lm_exp)$r.squared,4)` -->
 
 # Fitting into the future, assuming* exponential growth continues
 
