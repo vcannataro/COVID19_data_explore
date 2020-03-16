@@ -1,4 +1,6 @@
-Repository to explore some COVID19 data. 
+Repository to explore COVID19 data. 
+
+I am using these data to learn how to clean + plot time series data. No medical or scientific conclusions should be made using the analyses within this repository. 
 
 Terms of use of the initial data source: 
 https://github.com/CSSEGISandData/COVID-19.git

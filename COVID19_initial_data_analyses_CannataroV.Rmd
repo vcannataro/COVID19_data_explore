@@ -1,7 +1,7 @@
 ---
 title: "COVID19 data exploration"
 author: "Vincent L. Cannataro"
-date: "March 15, 2020"
+date: 'last update `r format(Sys.Date(), "%Y-%B-%d")`'
 output: html_document
 ---
 
