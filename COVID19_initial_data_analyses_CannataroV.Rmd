@@ -2,7 +2,7 @@
 title: "COVID19 data exploration"
 author: "Vincent L. Cannataro"
 date: 'last update `r format(Sys.Date(), "%Y-%B-%d")`'
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -47,13 +47,6 @@ US_data <- jhu_data_m %>%
   summarize(all_cases = sum(Confirmed_cases)) %>%
   filter(!is.na(all_cases)) 
 
-```
-
-
-The total number of confirmed cases in the USA by date: 
-
-```{r, echo=T}
-DT::datatable(US_data)
 ```
 
 
@@ -157,5 +150,12 @@ fit_plot <- ggplot(data = US_data) +
 ggplot2::ggsave(plot = fit_plot,
                 filename = "output_data/figures/fit_plot.pdf",width = 7,height = 5)
 
+```
+
+
+The total number of confirmed cases in the USA by date: 
+
+```{r, echo=T}
+knitr::kable(US_data)
 ```
 
