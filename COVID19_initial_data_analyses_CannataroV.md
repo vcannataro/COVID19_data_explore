@@ -1,7 +1,7 @@
 COVID19 data exploration
 ================
 Vincent L. Cannataro
-last update 2020-March-20
+last update 2020-March-21
 
 Data obtained from curated Johns Hopkins University Center for Systems
 Science and Engineering database here:
@@ -33,7 +33,7 @@ fit_lm_exp <- lm(formula = log10(all_cases) ~ Date,
 # https://twitter.com/vsbuffalo/status/1239233074203746304 
 ```
 
-<!-- We find an $R^2$ value of 0.9973 -->
+<!-- We find an $R^2$ value of 0.997 -->
 
 # Fitting into the future, assuming\* exponential growth continues
 
@@ -134,3 +134,4 @@ knitr::kable(US_data)
 | US             | 2020-03-17 |       6421 |
 | US             | 2020-03-18 |       7783 |
 | US             | 2020-03-19 |      13677 |
+| US             | 2020-03-20 |      19100 |
