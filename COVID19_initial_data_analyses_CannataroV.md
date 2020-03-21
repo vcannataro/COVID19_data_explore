@@ -66,13 +66,16 @@ future_predictions$log10_count <- predict(fit_lm_exp,newdata = future_prediction
 Keep in mind, that the axis above is on a log10 scale, meaning that
 \(6\) on the axis is really \(1000000\)
 
-*Let’s do everything we can do deviate from this fit\!*
+*Let’s do everything we can do deviate from this
+fit\!*
+
+# By State
+
+![](COVID19_initial_data_analyses_CannataroV_files/figure-gfm/plotting%20states-1.png)<!-- -->![](COVID19_initial_data_analyses_CannataroV_files/figure-gfm/plotting%20states-2.png)<!-- -->
+
+## Table of confirmed cases in the USA:
 
 The total number of confirmed cases in the USA by date:
-
-``` r
-knitr::kable(US_data)
-```
 
 | Country/Region | Date       | all\_cases |
 | :------------- | :--------- | ---------: |
