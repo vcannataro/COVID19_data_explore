@@ -193,7 +193,7 @@ USA_by_state <- USA_by_state %>%
   filter(state %in% state_names$state_name)
 
 USA_by_state$state <- factor(USA_by_state$state, 
-                                        levels=unique(USA_by_state$state))
+                                        levels=sort(unique(USA_by_state$state)))
 
 USA_by_state <- USA_by_state %>%
   group_by(state, Date) %>%
