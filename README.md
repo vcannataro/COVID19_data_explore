@@ -2,6 +2,8 @@ Repository to explore COVID19 data.
 
 I am using these data to learn how to clean + plot time series data. No medical or scientific conclusions should be made using the analyses within this repository. 
 
+Some outputs are collected in a mardown document [here](https://github.com/vcannataro/COVID19_data_explore/blob/master/COVID19_initial_data_analyses_CannataroV.md)
+
 Terms of use of the initial data source: 
 https://github.com/CSSEGISandData/COVID-19.git
 

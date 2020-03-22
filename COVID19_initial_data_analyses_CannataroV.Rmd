@@ -233,7 +233,7 @@ ggplot(data = USA_by_state, aes(x=as.numeric(Date_since_first_case),
                                 color=state,
                                 shape=state)) + 
   geom_line(alpha=0.5) + 
-  geom_point(alpha=0.5) + 
+  geom_point(alpha=0.5,size=3) + 
   theme_classic() + 
   scale_color_discrete(name="State") + 
   scale_shape_manual(name="State",
@@ -254,7 +254,7 @@ ggplot(data = USA_by_state, aes(x=as.numeric(Date_since_first_case),
                                 color=state,
                                 shape=state)) + 
   geom_line(alpha=0.5) + 
-  geom_point(alpha=0.5) + 
+  geom_point(alpha=0.5,size=3) + 
   theme_classic() + 
   scale_color_discrete(name="State") + 
   scale_shape_manual(name="State",
