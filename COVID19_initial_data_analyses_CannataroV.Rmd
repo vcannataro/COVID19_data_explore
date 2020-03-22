@@ -242,7 +242,7 @@ ggplot(data = USA_by_state, aes(x=as.numeric(Date_since_first_case),
   labs(title="Confirmed cases in the USA, split by state",
        caption = "Data: https://github.com/CSSEGISandData/COVID-19\nPlot: @VinCannataro",
        y="Confirmed cases", 
-       x="Days since first case in dataset") + 
+       x="Days since first case in dataset ") + 
   # scale_y_log10() +
   scale_x_continuous(breaks = seq(from = 0,to = max(as.numeric(USA_by_state$Date_since_first_case)),by = 2))
 
@@ -263,7 +263,7 @@ ggplot(data = USA_by_state, aes(x=as.numeric(Date_since_first_case),
   labs(title="Confirmed cases in the USA, split by state",
        caption = "Data: https://github.com/CSSEGISandData/COVID-19\nPlot: @VinCannataro",
        y="Confirmed cases, log10 axis scale", 
-       x="Days since first case in dataset") + 
+       x="Days since first case in dataset ") + 
   scale_y_log10() +
   scale_x_continuous(breaks = seq(from = 0,to = max(as.numeric(USA_by_state$Date_since_first_case)),by = 2))
 
