@@ -1,7 +1,7 @@
 COVID19 data exploration
 ================
 Vincent L. Cannataro
-last update 2020-March-23
+last update 2020-March-24
 
 Data obtained from curated Johns Hopkins University Center for Systems
 Science and Engineering database here:
