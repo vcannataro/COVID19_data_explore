@@ -1,11 +1,13 @@
 COVID19 data exploration
 ================
 Vincent L. Cannataro
-last update 2020-March-24
+last update 2020-March-29
 
 Data obtained from curated Johns Hopkins University Center for Systems
 Science and Engineering database here:
-<https://github.com/CSSEGISandData/COVID-19.git>
+<https://github.com/CSSEGISandData/COVID-19.git> and from from The New
+York Times, based on reports from state and local health agencies
+<https://github.com/nytimes/covid-19-data>
 
 # Current USA confirmed cases
 
@@ -25,15 +27,15 @@ start_date
     ## [1] "2020-03-01"
 
 ``` r
-fit_lm_exp <- lm(formula = log10(all_cases) ~ Date, 
-                 data = subset(US_data,Date>start_date))
+fit_lm_exp <- lm(formula = log10(all_cases) ~ date, 
+                 data = subset(US_data,date>start_date))
 
 # summary(fit_lm_exp)$r.squared # removed r.squared because 
 # it is not a correct statistic on this time series data 
 # https://twitter.com/vsbuffalo/status/1239233074203746304 
 ```
 
-<!-- We find an $R^2$ value of 0.9973 -->
+<!-- We find an $R^2$ value of 0.9982 -->
 
 # Fitting into the future, assuming\* exponential growth continues
 
@@ -42,8 +44,8 @@ population models. Eventually, you will either run out of new
 susceptible people to infect. Or, we can intervene in disease spread,
 and deviate from this continued growth.
 
-But, let’s assume exponential growth continues. What would happen to the
-number of confirmed cases over time?
+But, let’s naïvely assume exponential growth continues. What would
+happen to the number of confirmed cases over time?
 
 We can use our fit to the recent data generated above to predict into
 the future.
@@ -58,7 +60,8 @@ end_date
 # fitting into the future 
 future_predictions <- data.frame(Date = seq(start_date,end_date,by = "1 day"))
 
-future_predictions$log10_count <- predict(fit_lm_exp,newdata = future_predictions)
+# future_predictions$log10_count <- predict(fit_lm_exp,newdata = future_predictions)
+future_predictions$log10_count <- (as.numeric(future_predictions$Date) * fit_lm_exp$coefficients[2]) + fit_lm_exp$coefficients[1]
 ```
 
 ![](COVID19_initial_data_analyses_CannataroV_files/figure-gfm/fitting%20into%20the%20future%20plot-1.png)<!-- -->
@@ -77,66 +80,73 @@ fit\!*
 
 The total number of confirmed cases in the USA by date:
 
-| Country/Region | Date       | all\_cases |
-| :------------- | :--------- | ---------: |
-| US             | 2020-01-22 |          1 |
-| US             | 2020-01-23 |          1 |
-| US             | 2020-01-24 |          2 |
-| US             | 2020-01-25 |          2 |
-| US             | 2020-01-26 |          5 |
-| US             | 2020-01-27 |          5 |
-| US             | 2020-01-28 |          5 |
-| US             | 2020-01-29 |          5 |
-| US             | 2020-01-30 |          5 |
-| US             | 2020-01-31 |          7 |
-| US             | 2020-02-01 |          8 |
-| US             | 2020-02-02 |          8 |
-| US             | 2020-02-03 |         11 |
-| US             | 2020-02-04 |         11 |
-| US             | 2020-02-05 |         11 |
-| US             | 2020-02-06 |         11 |
-| US             | 2020-02-07 |         11 |
-| US             | 2020-02-08 |         11 |
-| US             | 2020-02-09 |         11 |
-| US             | 2020-02-10 |         11 |
-| US             | 2020-02-11 |         12 |
-| US             | 2020-02-12 |         12 |
-| US             | 2020-02-13 |         13 |
-| US             | 2020-02-14 |         13 |
-| US             | 2020-02-15 |         13 |
-| US             | 2020-02-16 |         13 |
-| US             | 2020-02-17 |         13 |
-| US             | 2020-02-18 |         13 |
-| US             | 2020-02-19 |         13 |
-| US             | 2020-02-20 |         13 |
-| US             | 2020-02-21 |         15 |
-| US             | 2020-02-22 |         15 |
-| US             | 2020-02-23 |         15 |
-| US             | 2020-02-24 |         51 |
-| US             | 2020-02-25 |         51 |
-| US             | 2020-02-26 |         57 |
-| US             | 2020-02-27 |         58 |
-| US             | 2020-02-28 |         60 |
-| US             | 2020-02-29 |         68 |
-| US             | 2020-03-01 |         74 |
-| US             | 2020-03-02 |         98 |
-| US             | 2020-03-03 |        118 |
-| US             | 2020-03-04 |        149 |
-| US             | 2020-03-05 |        217 |
-| US             | 2020-03-06 |        262 |
-| US             | 2020-03-07 |        402 |
-| US             | 2020-03-08 |        518 |
-| US             | 2020-03-09 |        583 |
-| US             | 2020-03-10 |        959 |
-| US             | 2020-03-11 |       1281 |
-| US             | 2020-03-12 |       1663 |
-| US             | 2020-03-13 |       2179 |
-| US             | 2020-03-14 |       2727 |
-| US             | 2020-03-15 |       3499 |
-| US             | 2020-03-16 |       4632 |
-| US             | 2020-03-17 |       6421 |
-| US             | 2020-03-18 |       7783 |
-| US             | 2020-03-19 |      13677 |
-| US             | 2020-03-20 |      19100 |
-| US             | 2020-03-21 |      25489 |
-| US             | 2020-03-22 |      33272 |
+| date       | all\_cases |
+| :--------- | ---------: |
+| 2020-01-21 |          1 |
+| 2020-01-22 |          1 |
+| 2020-01-23 |          1 |
+| 2020-01-24 |          2 |
+| 2020-01-25 |          3 |
+| 2020-01-26 |          5 |
+| 2020-01-27 |          5 |
+| 2020-01-28 |          5 |
+| 2020-01-29 |          5 |
+| 2020-01-30 |          6 |
+| 2020-01-31 |          7 |
+| 2020-02-01 |          8 |
+| 2020-02-02 |         11 |
+| 2020-02-03 |         11 |
+| 2020-02-04 |         11 |
+| 2020-02-05 |         12 |
+| 2020-02-06 |         12 |
+| 2020-02-07 |         12 |
+| 2020-02-08 |         12 |
+| 2020-02-09 |         12 |
+| 2020-02-10 |         13 |
+| 2020-02-11 |         13 |
+| 2020-02-12 |         14 |
+| 2020-02-13 |         15 |
+| 2020-02-14 |         15 |
+| 2020-02-15 |         15 |
+| 2020-02-16 |         15 |
+| 2020-02-17 |         25 |
+| 2020-02-18 |         25 |
+| 2020-02-19 |         25 |
+| 2020-02-20 |         27 |
+| 2020-02-21 |         30 |
+| 2020-02-22 |         30 |
+| 2020-02-23 |         30 |
+| 2020-02-24 |         43 |
+| 2020-02-25 |         45 |
+| 2020-02-26 |         60 |
+| 2020-02-27 |         60 |
+| 2020-02-28 |         65 |
+| 2020-02-29 |         70 |
+| 2020-03-01 |         88 |
+| 2020-03-02 |        104 |
+| 2020-03-03 |        125 |
+| 2020-03-04 |        161 |
+| 2020-03-05 |        228 |
+| 2020-03-06 |        311 |
+| 2020-03-07 |        428 |
+| 2020-03-08 |        547 |
+| 2020-03-09 |        748 |
+| 2020-03-10 |       1018 |
+| 2020-03-11 |       1263 |
+| 2020-03-12 |       1668 |
+| 2020-03-13 |       2224 |
+| 2020-03-14 |       2898 |
+| 2020-03-15 |       3600 |
+| 2020-03-16 |       4507 |
+| 2020-03-17 |       5905 |
+| 2020-03-18 |       8345 |
+| 2020-03-19 |      12413 |
+| 2020-03-20 |      17996 |
+| 2020-03-21 |      24532 |
+| 2020-03-22 |      33061 |
+| 2020-03-23 |      43499 |
+| 2020-03-24 |      54168 |
+| 2020-03-25 |      68775 |
+| 2020-03-26 |      85615 |
+| 2020-03-27 |     102913 |
+| 2020-03-28 |     123618 |

@@ -11,27 +11,38 @@ library(tidyverse)
 ```
 
 
-Data obtained from curated Johns Hopkins University Center for Systems Science and Engineering database here: https://github.com/CSSEGISandData/COVID-19.git
+Data obtained from curated Johns Hopkins University Center for Systems Science and Engineering database here: https://github.com/CSSEGISandData/COVID-19.git and from from The New York Times, based on reports from state and local health agencies https://github.com/nytimes/covid-19-data 
 
 
 ```{r get data, include=F}
-jhu_data <- read.csv(check.names = F,
-  file = "JHU_COVID19_data/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
+# jhu_data <- read.csv(check.names = F,
+#   file = "JHU_COVID19_data/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
+# 
+# # clean data types prior to melting
+# jhu_data <- jhu_data %>%
+#   mutate_if(is.numeric,as.character, 
+#             is.factor, as.character)
+# 
+# jhu_data_m <- tidyr::pivot_longer(data = jhu_data, 
+#                                   cols=`1/22/20`:colnames(jhu_data)[ncol(jhu_data)], 
+#                                   values_to = "Confirmed_cases",names_to = "Date") %>%
+#   mutate(Confirmed_cases = as.numeric(Confirmed_cases))
+# 
+# jhu_data_m <- jhu_data_m %>%
+#   mutate(Date = as.Date(Date, format= "%m/%d/%y"))
 
-# clean data types prior to melting
-jhu_data <- jhu_data %>%
-  mutate_if(is.numeric,as.character, 
-            is.factor, as.character)
-
-jhu_data_m <- tidyr::pivot_longer(data = jhu_data, 
-                                  cols=`1/22/20`:colnames(jhu_data)[ncol(jhu_data)], 
-                                  values_to = "Confirmed_cases",names_to = "Date") %>%
-  mutate(Confirmed_cases = as.numeric(Confirmed_cases))
-
-jhu_data_m <- jhu_data_m %>%
-  mutate(Date = as.Date(Date, format= "%m/%d/%y"))
+# March 22 update 
+# run cleaning_data_for_export.R first
+# load("output_data/cleaned_data/combined_CDR_data.RData")
 
 
+
+# try with NY Times data 
+nytimes_county <- read.csv(file = "NY_Times_COVID19_data/covid-19-data/us-counties.csv",
+                           stringsAsFactors = T)
+
+
+nytimes_county$date <- as.Date(nytimes_county$date,format = "%Y-%m-%d")
 
 ```
 
@@ -39,13 +50,32 @@ jhu_data_m <- jhu_data_m %>%
 
 
 ```{r USA data, include=F}
+# 
+# # 
+# US_data <- combined_CDR_data %>% 
+#   filter(Country %in% c("US")) %>%
+#   filter(State %in% state.name) %>%
+#   # group_by(State,Updated) %>%
+#   # summarize(all_cases = sum(Confirmed)) %>%
+#   mutate(Date = as.Date(format(Updated, "%Y-%m-%d"))) %>%
+#   # group_by(State,Date) %>%
+#   # summarize(all_cases = max(Confirmed)) %>%
+#   group_by(Date) %>%
+#   summarize(all_cases = sum(Confirmed)) %>%
+#   filter(!is.na(all_cases)) 
+# 
+# US_data$cumulative_sum <- NA
+# US_data$cumulative_sum[1] <- US_data$all_cases[1]
+# for(day_ind in 2:nrow(US_data)){
+#  US_data$cumulative_sum[day_ind] <- US_data$cumulative_sum[day_ind-1] + US_data$all_cases[day_ind]
+# }
+
+US_data <- nytimes_county %>%
+  group_by(date) %>%
+  summarize(all_cases = sum(cases)) 
 
 
-US_data <- jhu_data_m %>% 
-  filter(`Country/Region` %in% c("US")) %>%
-  group_by(`Country/Region`,Date) %>%
-  summarize(all_cases = sum(Confirmed_cases)) %>%
-  filter(!is.na(all_cases)) 
+
 
 ```
 
@@ -56,17 +86,17 @@ It looks like the total number of confirmed cases in the USA is currently growin
 
 ```{r,echo=F}
 ggplot(data = US_data) + 
-  geom_point(aes(x=Date, y=all_cases,color=`Country/Region`)) + 
-  theme_classic()  + 
+  geom_point(aes(x=date, y=all_cases)) + 
+  theme_bw()  + 
   labs(y="All confirmed cases") + 
   labs(title="Confirmed cases in the USA",
-       caption = "Data: https://github.com/CSSEGISandData/COVID-19\nPlot: @VinCannataro") 
+       caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro") 
 
 ggplot(data = US_data) + 
-  geom_point(aes(x=Date, y=all_cases,color=`Country/Region`)) + 
-  theme_classic()  + 
+  geom_point(aes(x=date, y=all_cases)) + 
+  theme_bw()  + 
   labs(y="All confirmed cases, log10 scale") + 
-  labs(title="Confirmed cases in the USA, Y axis log10 scaled",caption = "Data: https://github.com/CSSEGISandData/COVID-19\nPlot: @VinCannataro") + 
+  labs(title="Confirmed cases in the USA, Y axis log10 scaled",caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro") + 
   scale_y_log10()
 ```
 
@@ -86,8 +116,8 @@ fit a linear model to the log10(y) ~ x,
 ```{r exp fit}
 start_date
 
-fit_lm_exp <- lm(formula = log10(all_cases) ~ Date, 
-                 data = subset(US_data,Date>start_date))
+fit_lm_exp <- lm(formula = log10(all_cases) ~ date, 
+                 data = subset(US_data,date>start_date))
 
 # summary(fit_lm_exp)$r.squared # removed r.squared because 
 # it is not a correct statistic on this time series data 
@@ -103,7 +133,7 @@ fit_lm_exp <- lm(formula = log10(all_cases) ~ Date,
 Eventually, you will either run out of new susceptible people to infect. Or, 
 we can intervene in disease spread, and deviate from this continued growth. 
 
-But, let's assume exponential growth continues. What would happen to the number of 
+But, let's naïvely assume exponential growth continues. What would happen to the number of 
 confirmed cases over time?
 
 We can use our fit to the recent data generated above to predict into the future.
@@ -114,7 +144,10 @@ end_date
 # fitting into the future 
 future_predictions <- data.frame(Date = seq(start_date,end_date,by = "1 day"))
 
-future_predictions$log10_count <- predict(fit_lm_exp,newdata = future_predictions)
+# future_predictions$log10_count <- predict(fit_lm_exp,newdata = future_predictions)
+future_predictions$log10_count <- (as.numeric(future_predictions$Date) * fit_lm_exp$coefficients[2]) + fit_lm_exp$coefficients[1]
+
+
 
 ```
 
@@ -122,14 +155,14 @@ future_predictions$log10_count <- predict(fit_lm_exp,newdata = future_prediction
 ```{r fitting into the future plot, echo=F}
 
 ggplot(data = US_data) + 
-  geom_point(aes(x=Date, y=log10(all_cases),color=`Country/Region`)) + 
-  geom_line(data = future_predictions, aes(x=Date,y=log10_count),linetype="dashed") + 
-  theme_classic()  + 
+  geom_point(aes(x=date, y=log10(all_cases))) + 
+  geom_line(data = future_predictions, aes(x=Date,y=log10_count),linetype="dashed",col="red") + 
+  theme_bw()  + 
   labs(y="log10(All confirmed cases)") + 
   scale_x_date(date_breaks = "2 days",date_labels = "%b %d") + 
-  theme(axis.text.x = element_text(angle=90)) + 
-  labs(title="Confirmed cases in the USA, including a simple prediction",
-       caption = "Data: https://github.com/CSSEGISandData/COVID-19\nPlot: @VinCannataro")
+  theme(axis.text.x = element_text(angle=90,vjust=0.5)) + 
+  labs(title="Confirmed cases in the USA, including a simple (and misguided) prediction",
+       caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro")
 ```
 
 
@@ -141,13 +174,14 @@ is really $1000000$
 
 ```{r, include=F}
 fit_plot <- ggplot(data = US_data) + 
-  geom_point(aes(x=Date, y=log10(all_cases),color=`Country/Region`)) + 
-  geom_line(data = future_predictions, aes(x=Date,y=log10_count),linetype="dashed") + 
-  theme_classic()  + 
+  geom_point(aes(x=date, y=log10(all_cases))) + 
+  geom_line(data = future_predictions, aes(x=Date,y=log10_count),linetype="dashed",col="red") + 
+  theme_bw()  + 
   labs(y="log10(All confirmed cases)") + 
   scale_x_date(date_breaks = "2 days",date_labels = "%b %d") + 
-  theme(axis.text.x = element_text(angle=90)) + 
-  labs(title="Confirmed cases in the USA, including a simple prediction")
+  theme(axis.text.x = element_text(angle=90,vjust=0.5)) + 
+  labs(title="Confirmed cases in the USA, including a simple (and misguided) prediction",
+       caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro")
 
 ggplot2::ggsave(plot = fit_plot,
                 filename = "output_data/figures/fit_plot.pdf",width = 7,height = 5)
@@ -161,48 +195,54 @@ ggplot2::ggsave(plot = fit_plot,
 
 ```{r breaking up USA by state, include=F}
 # just the USA data 
-USA_by_state <- jhu_data_m %>%
-  filter(`Country/Region` == "US")
-
-
-# need to collapse county level to the state level
-state_names <- data.frame(state_name = state.name, state_abb = state.abb,stringsAsFactors = F)
-state_names <- rbind(state_names,c("D.C.","D.C."))
-rownames(state_names) <- state_names$state_abb
-
-
-# grep(pattern = paste(state.abb,collapse = "|"),x = USA_by_state$`Province/State`,)
-
-state_vec <- rep(NA,length=nrow(USA_by_state))
-
-state_split <- strsplit(x = as.character(USA_by_state$`Province/State`),split = ",")
-
-# loop through to bring county --> state level 
-for(state_ind in 1:length(state_split)){
- if(length(state_split[[state_ind]])==1){
-   state_vec[state_ind] <- state_split[[state_ind]]
- }else{
-   state_vec[state_ind] <- state_names[trimws(state_split[[state_ind]][2]),"state_name"]
- }
-}
-
-
-USA_by_state$state <- state_vec 
-
-USA_by_state <- USA_by_state %>%
-  filter(state %in% state_names$state_name)
-
-USA_by_state$state <- factor(USA_by_state$state, 
-                                        levels=sort(unique(USA_by_state$state)))
-
-USA_by_state <- USA_by_state %>%
-  group_by(state, Date) %>%
-  summarize(Confirmed_cases = sum(Confirmed_cases))
+# USA_by_state <- jhu_data_m %>%
+#   filter(`Country/Region` == "US")
+# 
+# 
+# # need to collapse county level to the state level
+# state_names <- data.frame(state_name = state.name, state_abb = state.abb,stringsAsFactors = F)
+# state_names <- rbind(state_names,c("D.C.","D.C."))
+# rownames(state_names) <- state_names$state_abb
+# 
+# 
+# # grep(pattern = paste(state.abb,collapse = "|"),x = USA_by_state$`Province/State`,)
+# 
+# state_vec <- rep(NA,length=nrow(USA_by_state))
+# 
+# state_split <- strsplit(x = as.character(USA_by_state$`Province/State`),split = ",")
+# 
+# # loop through to bring county --> state level 
+# for(state_ind in 1:length(state_split)){
+#  if(length(state_split[[state_ind]])==1){
+#    state_vec[state_ind] <- state_split[[state_ind]]
+#  }else{
+#    state_vec[state_ind] <- state_names[trimws(state_split[[state_ind]][2]),"state_name"]
+#  }
+# }
+# 
+# 
+# USA_by_state$state <- state_vec 
+# 
+# USA_by_state <- USA_by_state %>%
+#   filter(state %in% state_names$state_name)
+# 
+# USA_by_state$state <- factor(USA_by_state$state, 
+#                                         levels=sort(unique(USA_by_state$state)))
+# 
+# USA_by_state <- USA_by_state %>%
+#   group_by(state, Date) %>%
+#   summarize(Confirmed_cases = sum(Confirmed_cases))
 # ggplot(data = USA_by_state, aes(x = Date,y=Confirmed_cases,color=`Province/State`)) + 
 #   geom_line() 
 
 # this seems like what we want. 
 
+USA_by_state <- nytimes_county %>%
+  group_by(state,date) %>%
+  summarize(Confirmed_cases = sum(cases)) %>%
+  filter(state %in% state.name)
+
+USA_by_state$state <- factor(USA_by_state$state, levels = unique(USA_by_state$state))
 ```
 
 
@@ -212,11 +252,11 @@ USA_by_state <- USA_by_state %>%
 first_cases <- USA_by_state %>% 
   filter(Confirmed_cases > 0) %>%
   group_by(state) %>% 
-  summarize(first_case = min(Date)) %>%
+  summarize(first_case = min(date)) %>%
   as.data.frame(., stringsAsFacter=F)
 rownames(first_cases) <- first_cases$state
 
-USA_by_state$Date_since_first_case <- USA_by_state$Date - first_cases[as.character(USA_by_state$state), "first_case"]
+USA_by_state$Date_since_first_case <- USA_by_state$date - first_cases[as.character(USA_by_state$state), "first_case"]
 
 USA_by_state <- USA_by_state %>%
   filter(Date_since_first_case > 0)
@@ -234,13 +274,13 @@ ggplot(data = USA_by_state, aes(x=as.numeric(Date_since_first_case),
                                 shape=state)) + 
   geom_line(alpha=0.5) + 
   geom_point(alpha=0.5,size=3) + 
-  theme_classic() + 
+  theme_bw() + 
   scale_color_discrete(name="State") + 
   scale_shape_manual(name="State",
                        labels=levels(USA_by_state$state),
                        values=c(rep(15:19,11),15,16)) + 
   labs(title="Confirmed cases in the USA, split by state",
-       caption = "Data: https://github.com/CSSEGISandData/COVID-19\nPlot: @VinCannataro",
+       caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro",
        y="Confirmed cases", 
        x="Days since first case in dataset ") + 
   # scale_y_log10() +
@@ -255,13 +295,13 @@ ggplot(data = USA_by_state, aes(x=as.numeric(Date_since_first_case),
                                 shape=state)) + 
   geom_line(alpha=0.5) + 
   geom_point(alpha=0.5,size=3) + 
-  theme_classic() + 
+  theme_bw() + 
   scale_color_discrete(name="State") + 
   scale_shape_manual(name="State",
                        labels=levels(USA_by_state$state),
                        values=c(rep(15:19,11),15,16)) + 
   labs(title="Confirmed cases in the USA, split by state",
-       caption = "Data: https://github.com/CSSEGISandData/COVID-19\nPlot: @VinCannataro",
+       caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro",
        y="Confirmed cases, log10 axis scale", 
        x="Days since first case in dataset ") + 
   scale_y_log10() +
