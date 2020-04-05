@@ -1,7 +1,7 @@
 COVID19 data exploration
 ================
 Vincent L. Cannataro
-last update 2020-March-29
+last update 2020-April-05
 
 Data obtained from curated Johns Hopkins University Center for Systems
 Science and Engineering database here:
@@ -11,66 +11,10 @@ York Times, based on reports from state and local health agencies
 
 # Current USA confirmed cases
 
-It looks like the total number of confirmed cases in the USA is
-currently growing
-exponentially.
+The total number of cases in the USA is rapidly
+increasing.
 
 ![](COVID19_initial_data_analyses_CannataroV_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->![](COVID19_initial_data_analyses_CannataroV_files/figure-gfm/unnamed-chunk-1-2.png)<!-- -->
-
-Indeed, if we pull out the data from 2020-03-01 until the current date,
-and fit a linear model to the log10(y) ~ x,
-
-``` r
-start_date
-```
-
-    ## [1] "2020-03-01"
-
-``` r
-fit_lm_exp <- lm(formula = log10(all_cases) ~ date, 
-                 data = subset(US_data,date>start_date))
-
-# summary(fit_lm_exp)$r.squared # removed r.squared because 
-# it is not a correct statistic on this time series data 
-# https://twitter.com/vsbuffalo/status/1239233074203746304 
-```
-
-<!-- We find an $R^2$ value of 0.9982 -->
-
-# Fitting into the future, assuming\* exponential growth continues
-
-\* of course, exponential growth never continues indefinitely in
-population models. Eventually, you will either run out of new
-susceptible people to infect. Or, we can intervene in disease spread,
-and deviate from this continued growth.
-
-But, let’s naïvely assume exponential growth continues. What would
-happen to the number of confirmed cases over time?
-
-We can use our fit to the recent data generated above to predict into
-the future.
-
-``` r
-end_date
-```
-
-    ## [1] "2020-04-12"
-
-``` r
-# fitting into the future 
-future_predictions <- data.frame(Date = seq(start_date,end_date,by = "1 day"))
-
-# future_predictions$log10_count <- predict(fit_lm_exp,newdata = future_predictions)
-future_predictions$log10_count <- (as.numeric(future_predictions$Date) * fit_lm_exp$coefficients[2]) + fit_lm_exp$coefficients[1]
-```
-
-![](COVID19_initial_data_analyses_CannataroV_files/figure-gfm/fitting%20into%20the%20future%20plot-1.png)<!-- -->
-
-Keep in mind, that the axis above is on a log10 scale, meaning that
-\(6\) on the axis is really \(1000000\)
-
-*Let’s do everything we can do deviate from this
-fit\!*
 
 # By State
 
@@ -145,8 +89,14 @@ The total number of confirmed cases in the USA by date:
 | 2020-03-21 |      24532 |
 | 2020-03-22 |      33061 |
 | 2020-03-23 |      43499 |
-| 2020-03-24 |      54168 |
+| 2020-03-24 |      54198 |
 | 2020-03-25 |      68775 |
 | 2020-03-26 |      85615 |
 | 2020-03-27 |     102913 |
-| 2020-03-28 |     123618 |
+| 2020-03-28 |     123831 |
+| 2020-03-29 |     142178 |
+| 2020-03-30 |     163672 |
+| 2020-03-31 |     187962 |
+| 2020-04-01 |     214760 |
+| 2020-04-02 |     243719 |
+| 2020-04-03 |     276091 |

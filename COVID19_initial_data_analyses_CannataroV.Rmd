@@ -82,7 +82,7 @@ US_data <- nytimes_county %>%
 
 
 
-It looks like the total number of confirmed cases in the USA is currently growing exponentially. 
+The total number of cases in the USA is rapidly increasing. 
 
 ```{r,echo=F}
 ggplot(data = US_data) + 
@@ -105,86 +105,6 @@ ggplot(data = US_data) +
 start_date <- as.Date(x = "03/01/2020",format= "%m/%d/%y")
 
 end_date <- as.Date(x = "04/12/2020",format= "%m/%d/%y")
-
-```
-
-
-
-Indeed, if we pull out the data from `r start_date` until the current date, and 
-fit a linear model to the log10(y) ~ x, 
-
-```{r exp fit}
-start_date
-
-fit_lm_exp <- lm(formula = log10(all_cases) ~ date, 
-                 data = subset(US_data,date>start_date))
-
-# summary(fit_lm_exp)$r.squared # removed r.squared because 
-# it is not a correct statistic on this time series data 
-# https://twitter.com/vsbuffalo/status/1239233074203746304 
-
-```
-
-<!-- We find an $R^2$ value of `r round(summary(fit_lm_exp)$r.squared,4)` -->
-
-# Fitting into the future, assuming* exponential growth continues
-
-\* of course, exponential growth never continues indefinitely in population models. 
-Eventually, you will either run out of new susceptible people to infect. Or, 
-we can intervene in disease spread, and deviate from this continued growth. 
-
-But, let's naïvely assume exponential growth continues. What would happen to the number of 
-confirmed cases over time?
-
-We can use our fit to the recent data generated above to predict into the future.
-
-```{r future fit}
-end_date
-
-# fitting into the future 
-future_predictions <- data.frame(Date = seq(start_date,end_date,by = "1 day"))
-
-# future_predictions$log10_count <- predict(fit_lm_exp,newdata = future_predictions)
-future_predictions$log10_count <- (as.numeric(future_predictions$Date) * fit_lm_exp$coefficients[2]) + fit_lm_exp$coefficients[1]
-
-
-
-```
-
-
-```{r fitting into the future plot, echo=F}
-
-ggplot(data = US_data) + 
-  geom_point(aes(x=date, y=log10(all_cases))) + 
-  geom_line(data = future_predictions, aes(x=Date,y=log10_count),linetype="dashed",col="red") + 
-  theme_bw()  + 
-  labs(y="log10(All confirmed cases)") + 
-  scale_x_date(date_breaks = "2 days",date_labels = "%b %d") + 
-  theme(axis.text.x = element_text(angle=90,vjust=0.5)) + 
-  labs(title="Confirmed cases in the USA, including a simple (and misguided) prediction",
-       caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro")
-```
-
-
-Keep in mind, that the axis above is on a log10 scale, meaning that $6$ on the axis
-is really $1000000$
-
-*Let's do everything we can do deviate from this fit!*
-
-
-```{r, include=F}
-fit_plot <- ggplot(data = US_data) + 
-  geom_point(aes(x=date, y=log10(all_cases))) + 
-  geom_line(data = future_predictions, aes(x=Date,y=log10_count),linetype="dashed",col="red") + 
-  theme_bw()  + 
-  labs(y="log10(All confirmed cases)") + 
-  scale_x_date(date_breaks = "2 days",date_labels = "%b %d") + 
-  theme(axis.text.x = element_text(angle=90,vjust=0.5)) + 
-  labs(title="Confirmed cases in the USA, including a simple (and misguided) prediction",
-       caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro")
-
-ggplot2::ggsave(plot = fit_plot,
-                filename = "output_data/figures/fit_plot.pdf",width = 7,height = 5)
 
 ```
 
