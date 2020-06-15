@@ -63,6 +63,11 @@ all_country <- nytimes_county %>%
   mutate(lag_cases = total_cases - dplyr::lag(total_cases, default = 0))
 
 
+
+nytimes_data_lagged_state
+
+
+
 states_to_plot <- c("Alabama",
                     "Arizona",
                     "California",
@@ -76,25 +81,41 @@ states_to_plot <- c("Alabama",
                     "New Jersey",
                     "Massachusetts")
 
-states_data_to_plot <- nytimes_data_lagged_state %>%
-  filter(state %in% states_to_plot)
-states_data_to_plot$state <- factor(states_data_to_plot$state, levels= states_to_plot)
+
+
+states_data_to_plot <- nytimes_data_lagged_state 
+states_data_to_plot$state <- factor(states_data_to_plot$state, levels= unique(states_data_to_plot$state))
+
+
+other_states <- as.character(unique(states_data_to_plot$state))[!as.character(unique(states_data_to_plot$state)) %in% states_to_plot]
 
 states_data_to_plot_collapse <- states_data_to_plot
-states_data_to_plot_collapse$state <- forcats::fct_collapse(states_data_to_plot_collapse$state, `NY, NJ, MA` = c("New York","New Jersey","Massachusetts"))
+states_data_to_plot_collapse$state <- forcats::fct_collapse(states_data_to_plot_collapse$state, 
+                                                            `NY, NJ, MA` = c("New York","New Jersey","Massachusetts"),
+                                                            `Other states` = other_states)
+
+states_data_to_plot_collapse$state <- forcats::fct_relevel(states_data_to_plot_collapse$state,
+                                                           c("Other states",
+                                                             states_to_plot[1:(length(states_to_plot)-3)],
+                                                             "NY, NJ, MA"))
+
+states_data_to_plot_filtered <- states_data_to_plot %>%
+  filter(state %in% states_to_plot)
+
+
+states_data_to_plot_filtered$state <- forcats::fct_drop(states_data_to_plot_filtered$state)
+states_data_to_plot_filtered$state <- forcats::fct_relevel(states_data_to_plot_filtered$state,states_to_plot)
 
 gg_color_hue <- function(n) {
   hues = seq(15, 375, length = n + 1)
   hcl(h = hues, l = 65, c = 100)[1:n]
 }
 
-col_vec_collapse <- setNames(object = c(gg_color_hue(n = 
-                                                       length(levels(states_data_to_plot_collapse$state))-1),
-                                        "gray10"),nm = levels(states_data_to_plot_collapse$state))
+col_vec_collapse <- setNames(object = c("gray50",gg_color_hue(n = 
+                                                       length(levels(states_data_to_plot_collapse$state))-2),
+                                        rep("gray10",1)),nm = levels(states_data_to_plot_collapse$state))
 
-col_vec <- setNames(object = c(gg_color_hue(n = 
-                                              length(levels(states_data_to_plot$state))-3),
-                               rep("gray10",3)),nm = levels(states_data_to_plot$state))
+col_vec <- c(col_vec_collapse,setNames(object = rep("gray10",3),nm = c("New York","New Jersey","Massachusetts")))
 
 
 all_states <- ggplot(data = all_country) + 
@@ -103,32 +124,31 @@ all_states <- ggplot(data = all_country) +
            aes(x=date,y=lag_cases,fill=state),
            stat="identity",
            alpha=1,
-           position = "stack",
-           color="gray10") + 
+           position = "stack") + 
   theme_bw() +
-  coord_cartesian(xlim=as.Date(c("2020-03-15","2020-06-13"))) + 
+  coord_cartesian(xlim=as.Date(c("2020-03-15",max(nytimes_county$date)))) + 
   scale_x_date(date_labels = "%b %d",date_breaks = "7 days") +
   scale_fill_manual(values = col_vec_collapse, name="State") + 
   theme(axis.text.x = element_text(angle = 25,hjust = 1,vjust = 1)) +
   labs(y="Total new cases per day", 
        x= "Date", 
        title = "Total new cases per day in the entire USA and select states",
-       caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro")
+       caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro https://github.com/vcannataro/COVID19_data_explore")
 
 
 
 
-each_state <- ggplot(data = states_data_to_plot) + 
-  geom_bar(data = states_data_to_plot,
-           aes(x=date,y=lag_cases,fill=state),
+each_state <- ggplot(data = states_data_to_plot_filtered) + 
+  geom_bar(aes(x=date,y=lag_cases,fill=state),
            stat="identity",
            alpha=1) + 
   scale_fill_manual(values = col_vec,name="State") +
   theme_bw() + 
   facet_wrap(~state,scales = "free_y",nrow = 4) + 
   labs(y="Total new cases per day", 
-       x= "Date") + 
-  coord_cartesian(xlim=as.Date(c("2020-03-15","2020-06-13"))) + 
+       x= "Date",
+       caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro https://github.com/vcannataro/COVID19_data_explore") + 
+  coord_cartesian(xlim=as.Date(c("2020-03-15",max(nytimes_county$date)))) + 
   scale_x_date(date_labels = "%b %d",date_breaks = "1 month") 
 
 
