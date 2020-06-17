@@ -132,7 +132,7 @@ all_states <- ggplot(data = all_country) +
   theme(axis.text.x = element_text(angle = 25,hjust = 1,vjust = 1)) +
   labs(y="Total new cases per day", 
        x= "Date", 
-       title = "Total new cases per day in the entire USA and select states",
+       title = "Total new cases per day in the USA and select states",
        caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro https://github.com/vcannataro/COVID19_data_explore")
 
 
@@ -158,6 +158,9 @@ all_states_each_state_plot <- cowplot::plot_grid(all_states,each_state,nrow = 2)
 
 cowplot::save_plot(plot = all_states_each_state_plot,
                    filename = "output_data/figures/all_states_VS_each_state.pdf",
+                   base_height = 10,base_width = 8)
+cowplot::save_plot(plot = all_states_each_state_plot,
+                   filename = "output_data/figures/all_states_VS_each_state.png",
                    base_height = 10,base_width = 8)
 
 
