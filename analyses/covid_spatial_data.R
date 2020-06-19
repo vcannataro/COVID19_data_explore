@@ -6,7 +6,7 @@ library(magrittr)
 
 # load in latest data
 nytimes_county <- read.csv(file = "NY_Times_COVID19_data/covid-19-data/us-counties.csv",
-                           stringsAsFactors = T)
+                           stringsAsFactors = T) 
 
 # makes dates a date
 nytimes_county$date <- as.Date(nytimes_county$date,format = "%Y-%m-%d")
