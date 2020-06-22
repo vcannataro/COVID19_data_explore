@@ -1,8 +1,10 @@
 # mapping covid19
+# scratch script while I learn spatial data plotting 
 
 library(tidyverse)
 library(tidycensus)
 library(magrittr)
+library(zoo)
 
 # load in latest data
 nytimes_county <- read.csv(file = "NY_Times_COVID19_data/covid-19-data/us-counties.csv",
@@ -148,7 +150,7 @@ county_data$lag_cases_over_pop <- county_data$lag_cases/county_data$estimate
 county_data <- county_data %>%
   group_by(fips) %>%
   mutate(roll_mean = zoo::rollmean(x= lag_cases_over_pop, k= 7, na.pad=T)) %>%
-  mutate(roll_new_cases = zoo::rollmean(x = lag_cases, k=7, na.pad=T))
+  mutate(roll_new_cases = zoo::rollmean(x = lag_cases, k=7, na.pad=T)) %>%
   filter(!is.na(roll_mean ))
 
 
@@ -172,58 +174,64 @@ ggplot(data=county_polygons[grep("new york",county_polygons$ID),]) +
   geom_sf()
 
 
-
-ggplot(data=county_data_sf %>% filter(date == "2020-03-30" )) +
-  geom_sf(data = county_polygons) +
-  geom_sf(aes(geometry=geom.x,fill=roll_mean)) + 
-  scale_fill_gradient(low = "black",high= "red")
-# + 
+# 
+# ggplot(data=county_data_sf %>% filter(date == "2020-03-30" )) +
+#   geom_sf(data = county_polygons) +
+#   geom_sf(aes(geometry=geom.x,fill=roll_mean)) + 
+#   scale_fill_gradient(low = "black",high= "red")
+# # + 
   # scale_fill_gradientn(colors=viridis::viridis(10))
 # 
 
 # starting off with a cartogram
 county_data_sf <- sf::st_transform(x = county_data_sf, 5070)
 
-date_to_plot <- "2020-02-12"
-data_to_plot <- county_data_sf %>% filter(date ==  date_to_plot)
-
-whole_USA <- ggplot(data=data_to_plot) +
-  # geom_sf(data = county_polygons) +
-  geom_sf(aes(geometry=geom.x,fill=roll_new_cases)) + 
-  geom_sf(data=data_to_plot[data_to_plot$roll_new_cases==0,],aes(geometry=geom.x),fill="white") +
-  scale_fill_viridis_c(name="7-day\nmoving average") + 
-  labs(title="New cases per day per county, 7-day moving average",
-       subtitle = paste("Date:",date_to_plot ),
-       caption = paste("Data: The New York Times, https://github.com/nytimes/covid-19-data
-       Plot: @VinCannataro on",Sys.Date(),"https://github.com/vcannataro/COVID19_data_explore")) + 
-  theme_minimal()
-
-
+# date_to_plot <- "2020-02-12"
+# data_to_plot <- county_data_sf %>% filter(date ==  date_to_plot)
+# 
+# whole_USA <- ggplot(data=data_to_plot) +
+#   # geom_sf(data = county_polygons) +
+#   geom_sf(aes(geometry=geom.x,fill=roll_new_cases)) + 
+#   geom_sf(data=data_to_plot[data_to_plot$roll_new_cases==0,],aes(geometry=geom.x),fill="white") +
+#   scale_fill_viridis_c(name="7-day\nmoving average") + 
+#   labs(title="New cases per day per county, 7-day moving average",
+#        subtitle = paste("Date:",date_to_plot ),
+#        caption = paste("Data: The New York Times, https://github.com/nytimes/covid-19-data
+#        Plot: @VinCannataro on",Sys.Date(),"https://github.com/vcannataro/COVID19_data_explore")) + 
+#   theme_minimal()
 
 
-test_data <- county_data_sf %>% filter(date %in% as.Date(c("2020-06-01","2020-06-02","2020-06-03"))) %>%
-  mutate(num_date = as.numeric(date)) %>%
-  mutate(group = rep(seq(1,8655/3,1),3))
+
+# 
+# test_data <- county_data_sf %>% filter(date %in% as.Date(c("2020-06-01","2020-06-02","2020-06-03"))) %>%
+#   mutate(num_date = as.numeric(date)) %>%
+#   mutate(group = rep(seq(1,8655/3,1),3))
 
 county_data_sf <-  county_data_sf %>%
   mutate(num_date = as.numeric(date))
 
-whole_USA_anim <- ggplot(data=county_data_sf) +
+
+date_to_plot <- "2020-06-17"
+data_to_plot <- county_data_sf %>%
+  filter(date %in% as.Date(date_to_plot))
+
+whole_USA_anim <- ggplot(data=data_to_plot) +
   # geom_sf(data = county_polygons) +
   geom_sf(aes(fill=roll_new_cases)) + 
-  geom_sf(data=county_data_sf[county_data_sf$roll_new_cases==0,],aes(geometry=geom.x),fill="white") +
+  geom_sf(data=data_to_plot[data_to_plot$roll_new_cases==0,],aes(geometry=geom.x),fill="white") +
   scale_fill_viridis_c(name="7-day\nmoving average") + 
   labs(title="New cases per day per county, 7-day moving average",
-       subtitle = paste("Date: "),
+       subtitle = paste("Date: ","2020-06-17"),
        caption = paste("Data: The New York Times, https://github.com/nytimes/covid-19-data
-       Plot: @VinCannataro on",Sys.Date(),"https://github.com/vcannataro/COVID19_data_explore")) + 
-  theme_minimal() + 
-  gganimate::transition_manual(num_date)
+       Plot: @VinCannataro on",Sys.Date(),"
+                       https://github.com/vcannataro/COVID19_data_explore")) #+ 
+  # theme_minimal() #+ 
+  # gganimate::transition_manual(num_date)
 
-whole_USA_anim_mov <- gganimate::animate(whole_USA_anim,nframes=1000)
-gganimate::anim_save(animation = whole_USA_anim_mov,filename = "output_data/figures/all_states_over_time.gif")
+# whole_USA_anim_mov <- gganimate::animate(whole_USA_anim,nframes=1000)
+# gganimate::anim_save(animation = whole_USA_anim_mov,filename = "output_data/figures/all_states_over_time.gif")
 
-rayshader::plot_gg(whole_USA,width = 6,height = 6)
+rayshader::plot_gg(whole_USA_anim,width = 6,height = 6)
 rayshader::render_camera(theta = 0,phi = 90,zoom = .6,fov = 90)
 rayshader::render_snapshot()
 
@@ -237,53 +245,53 @@ zoomvec = 0.45 + 0.2 * 1/(1 + exp(seq(-5, 20, length.out = 180)))
 zoomvecfull = c(zoomvec, rev(zoomvec))
 
 # Actually render the video.
-rayshader::render_movie(filename = "output_data/figures/whole_USA", type = "custom", 
+rayshader::render_movie(filename = "output_data/figures/whole_USA_rayshader", type = "custom", 
              frames = 360,  phi = phivecfull, zoom = zoomvecfull, theta = thetavec)
 
 
-
-
-county_data_sf_NY <- county_data_sf[grep(x = county_data_sf$NAME,pattern = "New York"),]
-
-cart_data <- cartogram::cartogram_cont(county_data_sf %>% filter(date == "2020-03-30" ) %>%
-                                         mutate(lag_cases=lag_cases+1),weight="lag_cases",itermax=10)
-
-
-cart_data_NY <- cartogram::cartogram_cont(county_data_sf_NY %>% filter(date == "2020-03-10" ),weight="roll_mean",itermax=100)
-
-cart_data_NY <- cartogram::cartogram_cont(county_data_sf_NY %>% filter(date == "2020-03-30" ) %>% 
-                                            mutate(roll_mean = (roll_mean+1)^10),weight="roll_mean",itermax=10)
-
-cart_data_NY <- cartogram::cartogram_cont(county_data_sf_NY %>% filter(date == "2020-03-30" ) %>% 
-                                            mutate(lag_cases = (lag_cases+1)),weight="lag_cases",itermax=20)
-
-
-
-cart_data_early <- cartogram::cartogram_cont(county_data_sf %>% filter(date == "2020-02-02" ) %>%
-                                         mutate(roll_mean=roll_mean+1),weight="roll_mean",itermax=10)
-
-ggplot(data=cart_data_NY) +
-  # geom_sf(data = county_polygons) +
-  geom_sf(aes(geometry=geom.x,fill=lag_cases)) + 
-  scale_fill_gradient(low = "black",high= "red")
-
-ggplot(data=cart_data) +
-  # geom_sf(data = county_polygons) +
-  geom_sf(aes(geometry=geom.x,fill=lag_cases)) + 
-  scale_fill_gradient(low = "black",high= "red")
-
-ggplot(data=cart_data_early) +
-  # geom_sf(data = county_polygons) +
-  geom_sf(aes(geometry=geom.x,fill=lag_cases)) + 
-  scale_fill_gradient(low = "black",high= "red")
-
-
-
-whole_USA <- ggplot(data=county_data_sf %>% filter(date == "2020-03-30" )) +
-  # geom_sf(data = county_polygons) +
-  geom_sf(aes(geometry=geom.x,fill=roll_mean)) + 
-  scale_color_viridis_c() 
-rayshader::plot_gg(whole_USA,multicore = F,width = 12,height = 5)
-
-
-
+# 
+# 
+# county_data_sf_NY <- county_data_sf[grep(x = county_data_sf$NAME,pattern = "New York"),]
+# 
+# cart_data <- cartogram::cartogram_cont(county_data_sf %>% filter(date == "2020-03-30" ) %>%
+#                                          mutate(lag_cases=lag_cases+1),weight="lag_cases",itermax=10)
+# 
+# 
+# cart_data_NY <- cartogram::cartogram_cont(county_data_sf_NY %>% filter(date == "2020-03-10" ),weight="roll_mean",itermax=100)
+# 
+# cart_data_NY <- cartogram::cartogram_cont(county_data_sf_NY %>% filter(date == "2020-03-30" ) %>% 
+#                                             mutate(roll_mean = (roll_mean+1)^10),weight="roll_mean",itermax=10)
+# 
+# cart_data_NY <- cartogram::cartogram_cont(county_data_sf_NY %>% filter(date == "2020-03-30" ) %>% 
+#                                             mutate(lag_cases = (lag_cases+1)),weight="lag_cases",itermax=20)
+# 
+# 
+# 
+# cart_data_early <- cartogram::cartogram_cont(county_data_sf %>% filter(date == "2020-02-02" ) %>%
+#                                          mutate(roll_mean=roll_mean+1),weight="roll_mean",itermax=10)
+# 
+# ggplot(data=cart_data_NY) +
+#   # geom_sf(data = county_polygons) +
+#   geom_sf(aes(geometry=geom.x,fill=lag_cases)) + 
+#   scale_fill_gradient(low = "black",high= "red")
+# 
+# ggplot(data=cart_data) +
+#   # geom_sf(data = county_polygons) +
+#   geom_sf(aes(geometry=geom.x,fill=lag_cases)) + 
+#   scale_fill_gradient(low = "black",high= "red")
+# 
+# ggplot(data=cart_data_early) +
+#   # geom_sf(data = county_polygons) +
+#   geom_sf(aes(geometry=geom.x,fill=lag_cases)) + 
+#   scale_fill_gradient(low = "black",high= "red")
+# 
+# 
+# 
+# whole_USA <- ggplot(data=county_data_sf %>% filter(date == "2020-03-30" )) +
+#   # geom_sf(data = county_polygons) +
+#   geom_sf(aes(geometry=geom.x,fill=roll_mean)) + 
+#   scale_color_viridis_c() 
+# rayshader::plot_gg(whole_USA,multicore = F,width = 12,height = 5)
+# 
+# 
+# 
