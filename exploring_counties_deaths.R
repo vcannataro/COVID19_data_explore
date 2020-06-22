@@ -9,29 +9,29 @@ nytimes_county <- read.csv(file = "NY_Times_COVID19_data/covid-19-data/us-counti
 nytimes_county$date <- as.Date(nytimes_county$date,format = "%Y-%m-%d")
 
 
-# new cases per time point
+# new deaths per time point
 nytimes_data_lagged <- nytimes_county %>%
   group_by(state,county) %>%
-  mutate(lag_cases = cases - dplyr::lag(cases))
+  mutate(lag_deaths = deaths - dplyr::lag(deaths))
 
 # plotting some hometown data 
 
 ggplot(nytimes_data_lagged %>% filter(state=="New York" & county=="Suffolk")) +
-  geom_bar(aes(x=date,y=lag_cases), stat = "identity") + 
+  geom_bar(aes(x=date,y=lag_deaths), stat = "identity") + 
   theme_bw()
 
 # ggplot(nytimes_data_lagged %>% filter(state=="New York"))+
-#   geom_bar(aes(x=date,y=lag_cases), stat = "identity") + 
+#   geom_bar(aes(x=date,y=lag_deaths), stat = "identity") + 
 #   theme_bw()
 
 
 
 # ggplot(nytimes_data_lagged %>% filter(state=="New York" & county=="Nassau")) + 
-#   geom_bar(aes(x=date,y=lag_cases), stat = "identity")
+#   geom_bar(aes(x=date,y=lag_deaths), stat = "identity")
 # 
 # 
 ggplot(nytimes_data_lagged %>% filter(state=="Massachusetts" & county=="Suffolk")) +
-  geom_bar(aes(x=date,y=lag_cases), stat = "identity") +
+  geom_bar(aes(x=date,y=lag_deaths), stat = "identity") +
   theme_bw()
 
 
@@ -39,24 +39,24 @@ ggplot(nytimes_data_lagged %>% filter(state=="Massachusetts" & county=="Suffolk"
 # per state
 nytimes_data_lagged_state <- nytimes_county %>%
   group_by(state,date) %>%
-  summarize(total_state = sum(cases)) %>%
+  summarize(total_state = sum(deaths)) %>%
   arrange(state,date) %>%
   group_by(state) %>%
-  mutate(lag_cases = total_state - dplyr::lag(total_state,default = 0)) %>%
-  filter(lag_cases >= 0) 
+  mutate(lag_deaths = total_state - dplyr::lag(total_state,default = 0)) %>%
+  filter(lag_deaths >= 0) 
 
 
 
 
 ggplot(data = nytimes_data_lagged_state) + 
-  geom_bar(aes(x=date, y=lag_cases),stat="identity") + 
+  geom_bar(aes(x=date, y=lag_deaths),stat="identity") + 
   facet_wrap(~state,scales = "free_y") +
   theme_bw() + 
-  labs(y="New cases per day",x="Date") -> 
+  labs(y="New deaths per day",x="Date") -> 
   all_states
 
 
-ggsave(filename = "output_data/figures/all_states.pdf",plot = all_states,height = 15,width = 20)
+ggsave(filename = "output_data/figures/all_states_deaths.pdf",plot = all_states,height = 15,width = 20)
 
 
 
@@ -64,21 +64,21 @@ ggsave(filename = "output_data/figures/all_states.pdf",plot = all_states,height 
 
 all_country <- nytimes_county %>%
   group_by(date) %>%
-  summarize(total_cases = sum(cases)) %>%
-  mutate(lag_cases = total_cases - dplyr::lag(total_cases, default = 0))
+  summarize(total_deaths = sum(deaths)) %>%
+  mutate(lag_deaths = total_deaths - dplyr::lag(total_deaths, default = 0))
 
 
 
 top_states <- nytimes_data_lagged_state %>%
   filter(date == max(date)) %>%
   group_by(state) %>%
-  arrange(desc(lag_cases)) %>%
+  arrange(desc(lag_deaths)) %>%
   select(state) %>%
   as.matrix()
 
 top_states <- top_states[!top_states %in% c("New York",
-                  "New Jersey",
-                  "Massachusetts")][1:9]
+                                            "New Jersey",
+                                            "Massachusetts")][1:9]
 
 
 states_to_plot <- c(top_states,
@@ -117,16 +117,16 @@ gg_color_hue <- function(n) {
 }
 
 col_vec_collapse <- setNames(object = c("gray50",gg_color_hue(n = 
-                                                       length(levels(states_data_to_plot_collapse$state))-2),
+                                                                length(levels(states_data_to_plot_collapse$state))-2),
                                         rep("gray10",1)),nm = levels(states_data_to_plot_collapse$state))
 
 col_vec <- c(col_vec_collapse,setNames(object = rep("gray10",3),nm = c("New York","New Jersey","Massachusetts")))
 
 
 all_states <- ggplot(data = all_country) + 
-  geom_bar(aes(x=date,y=lag_cases),stat="identity",alpha=0.5,fill="black") + 
+  geom_bar(aes(x=date,y=lag_deaths),stat="identity",alpha=0.5,fill="black") + 
   geom_bar(data = states_data_to_plot_collapse,
-           aes(x=date,y=lag_cases,fill=state),
+           aes(x=date,y=lag_deaths,fill=state),
            stat="identity",
            alpha=1,
            position = "stack") + 
@@ -135,22 +135,22 @@ all_states <- ggplot(data = all_country) +
   scale_x_date(date_labels = "%b %d",date_breaks = "7 days") +
   scale_fill_manual(values = col_vec_collapse, name="State") + 
   theme(axis.text.x = element_text(angle = 25,hjust = 1,vjust = 1)) +
-  labs(y="Total new cases per day", 
+  labs(y="Total new deaths per day", 
        x= "Date", 
-       title = "Total new cases per day in the USA and select states",
+       title = "Total new deaths per day in the USA and select states",
        caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro https://github.com/vcannataro/COVID19_data_explore")
 
 
 
 
 each_state <- ggplot(data = states_data_to_plot_filtered) + 
-  geom_bar(aes(x=date,y=lag_cases,fill=state),
+  geom_bar(aes(x=date,y=lag_deaths,fill=state),
            stat="identity",
            alpha=1) + 
   scale_fill_manual(values = col_vec,name="State") +
   theme_bw() + 
   facet_wrap(~state,scales = "free_y",nrow = 4) + 
-  labs(y="Total new cases per day", 
+  labs(y="Total new deaths per day", 
        x= "Date",
        caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro https://github.com/vcannataro/COVID19_data_explore") + 
   coord_cartesian(xlim=as.Date(c("2020-03-15",max(nytimes_county$date)))) + 
@@ -162,10 +162,10 @@ each_state <- ggplot(data = states_data_to_plot_filtered) +
 all_states_each_state_plot <- cowplot::plot_grid(all_states,each_state,nrow = 2)
 
 cowplot::save_plot(plot = all_states_each_state_plot,
-                   filename = "output_data/figures/all_states_VS_each_state.pdf",
+                   filename = "output_data/figures/all_states_VS_each_state_deaths.pdf",
                    base_height = 10,base_width = 8)
 cowplot::save_plot(plot = all_states_each_state_plot,
-                   filename = "output_data/figures/all_states_VS_each_state.png",
+                   filename = "output_data/figures/all_states_VS_each_state_deaths.png",
                    base_height = 10,base_width = 8)
 
 
@@ -173,13 +173,13 @@ cowplot::save_plot(plot = all_states_each_state_plot,
 
 # nytimes_data_lagged %>%
 # group_by(date, state) %>%
-# summarize(state_totals = sum(lag_cases,na.rm = T)) %>%
+# summarize(state_totals = sum(lag_deaths,na.rm = T)) %>%
 # filter(state_totals >=0)
 
 # ggplot(data = nytimes_data_lagged_state %>% filter(state=="New York")) + 
 #   geom_bar(aes(x=date, y=state_totals),stat="identity")
 
-# nytimes_data_lagged_state[nytimes_data_lagged_state$lag_cases < 0,]
+# nytimes_data_lagged_state[nytimes_data_lagged_state$lag_deaths < 0,]
 
 
 # nytimes_data_lagged %>%
