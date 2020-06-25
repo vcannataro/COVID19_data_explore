@@ -5,6 +5,7 @@ library(tidyverse)
 library(tidycensus)
 library(magrittr)
 library(zoo)
+library(sf)
 
 # load in latest data
 nytimes_county <- read.csv(file = "NY_Times_COVID19_data/covid-19-data/us-counties.csv",
@@ -16,8 +17,39 @@ nytimes_county$date <- as.Date(nytimes_county$date,format = "%Y-%m-%d")
 # no duplicate data
 # nrow(nytimes_county)
 # nrow(dplyr::distinct(nytimes_county))
-nytimes_county[nytimes_county$county == "New York City","fips"] <- 36061
-29095 -> nytimes_county[nytimes_county$county == "Kansas City","fips"]
+
+
+# https://guides.newman.baruch.cuny.edu/nyc_data
+# The Bronx is Bronx County (ANSI / FIPS 36005)
+# Brooklyn is Kings County (ANSI / FIPS 36047)
+# Manhattan is New York County (ANSI / FIPS 36061)
+# Queens is Queens County (ANSI / FIPS 36081)
+# Staten Island is Richmond County (ANSI / FIPS 36085)
+
+
+# need to eventually make NYC split into above FIPS
+
+
+nyc_to_duplicate <- nytimes_county[nytimes_county$county == "New York City",]
+bronx <- nyc_to_duplicate
+bronx[,"county"] <- "Bronx"; bronx[,"fips"] <- 36005
+brooklyn <- nyc_to_duplicate
+brooklyn[,"county"] <- "Kings"; brooklyn[,"fips"] <- 36047 # no sleep 'til 
+manhattan <- nyc_to_duplicate
+manhattan[,"county"] <- "New York"; manhattan[,"fips"] <- 36061
+queens <- nyc_to_duplicate
+queens[,"county"] <- "Queens"; queens[,"fips"] <- 36081
+staten <- nyc_to_duplicate
+staten[,"county"] <- "Richmond Island"; staten[,"fips"] <- 36085
+
+
+nytimes_county <- rbind(nytimes_county,bronx,brooklyn,manhattan,queens,staten)
+
+# remove NYC
+nytimes_county <- nytimes_county %>% 
+  filter(county != "New York City")
+
+nytimes_county[nytimes_county$county == "Kansas City","fips"] <- 29095 
 
 # fill in missing data
 nytimes_complete <- nytimes_county %>%
@@ -25,21 +57,7 @@ nytimes_complete <- nytimes_county %>%
                   fips,
                   fill=list(cases=0,deaths=0))
 
-# test_fips <- nytimes_complete %>% filter(date == "2020-04-01" & state=="Nevada") %$% fips 
-# test_fips <- test_fips[!is.na(test_fips)]
-# nytimes_complete %>% filter(fips == 36061) %>%
-#   View()
-# # 
-# 
-# 
-# # fill in county and state data
-# fips_data <- nytimes_county %>%
-#   select(fips,county,state) %>%
-#   dplyr::distinct()
-# 
-# rownames(fips_data) <- fips_data$fips
-# 
-# fips_data %>% filter(fips == 29095)
+
 
 # new cases per time point
 nytimes_complete <- nytimes_complete %>%
@@ -92,17 +110,7 @@ county_data <- left_join(county_data,county_polygons,by = "fips")
 
 county_data <- county_data %>%
   filter(!is.na(fips))
-# checking the join 
-# county_data %>%
-#   filter(fips ==  36061 &
-#            date == "2020-01-21") %>%
-#   View()
 
-
-# county_data %>%
-#   filter(state == "New York" &
-#            date == "2020-01-22") %>%
-#   View()
 # 
 
 # 
@@ -142,8 +150,24 @@ county_data <- county_data[!duplicated(county_data %>% select(date,fips,cases,NA
 
 county_data$lag_cases_over_pop <- county_data$lag_cases/county_data$estimate
 
-# county_data %>%
-  # filter(lag_cases_over_pop > 0.01) %>% View()
+# nyc need to combine boroughs
+
+
+
+NYC_index <- which(county_data$NAME %in% c("Kings County, New York","Richmond County, New York",
+                                           "Bronx County, New York","New York County, New York",
+                                           "Queens County, New York"))
+NYC_pop <- as.matrix(county_pop[county_pop$NAME %in% c("Kings County, New York","Richmond County, New York",
+                                                       "Bronx County, New York","New York County, New York",
+                                                       "Queens County, New York"),])
+NYC_pop <- sum(unlist(NYC_pop[,"estimate"]))
+
+
+county_data[NYC_index,"lag_cases_over_pop"] <- county_data[NYC_index,"lag_cases"]/NYC_pop
+
+
+
+
 
 
 # better to do a running mean
@@ -152,7 +176,6 @@ county_data <- county_data %>%
   mutate(roll_mean = zoo::rollmean(x= lag_cases_over_pop, k= 7, na.pad=T)) %>%
   mutate(roll_new_cases = zoo::rollmean(x = lag_cases, k=7, na.pad=T)) %>%
   filter(!is.na(roll_mean ))
-
 
 
 
@@ -173,15 +196,6 @@ county_data_sf <- left_join(county_polygons,county_data,by = "fips")
 ggplot(data=county_polygons[grep("new york",county_polygons$ID),]) +
   geom_sf()
 
-
-# 
-# ggplot(data=county_data_sf %>% filter(date == "2020-03-30" )) +
-#   geom_sf(data = county_polygons) +
-#   geom_sf(aes(geometry=geom.x,fill=roll_mean)) + 
-#   scale_fill_gradient(low = "black",high= "red")
-# # + 
-  # scale_fill_gradientn(colors=viridis::viridis(10))
-# 
 
 # starting off with a cartogram
 county_data_sf <- sf::st_transform(x = county_data_sf, 5070)
@@ -211,6 +225,7 @@ county_data_sf <-  county_data_sf %>%
   mutate(num_date = as.numeric(date))
 
 
+
 date_to_plot <- "2020-06-20"
 data_to_plot <- county_data_sf %>%
   filter(date %in% as.Date(date_to_plot))
@@ -225,13 +240,17 @@ whole_USA_anim <- ggplot(data=data_to_plot) +
        caption = paste("Data: The New York Times, https://github.com/nytimes/covid-19-data
        Plot: @VinCannataro on",Sys.Date(),"
                        https://github.com/vcannataro/COVID19_data_explore")) #+ 
-  # theme_minimal() #+ 
-  # gganimate::transition_manual(num_date)
+# theme_minimal() #+ 
+# gganimate::transition_manual(num_date)
+
+
 
 # whole_USA_anim_mov <- gganimate::animate(whole_USA_anim,nframes=1000)
 # gganimate::anim_save(animation = whole_USA_anim_mov,filename = "output_data/figures/all_states_over_time.gif")
 
-rayshader::plot_gg(whole_USA_anim,width = 6,height = 6,multicore = F, windowsize = c(2000, 2000))
+# https://github.com/rstudio/rstudio/issues/6692#issuecomment-619645114
+# file.edit(".Rprofile")
+rayshader::plot_gg(whole_USA_anim,width = 6,height = 6,multicore = T, windowsize = c(2000, 2000))
 rayshader::render_camera(theta = 0,phi = 90,zoom = .6,fov = 90)
 rayshader::render_snapshot()
 
@@ -246,10 +265,41 @@ zoomvecfull = c(zoomvec, rev(zoomvec))
 
 # Actually render the video.
 rayshader::render_movie(filename = "output_data/figures/whole_USA_rayshader_June_20_2020", type = "custom", 
-             frames = 360,  phi = phivecfull, zoom = zoomvecfull, theta = thetavec)
+                        frames = 360,  phi = phivecfull, zoom = zoomvecfull, theta = thetavec)
+
+
+
+
+
+
+
+
+
+whole_USA_anim_roll <- ggplot(data=county_data_sf %>% filter(date == as.Date("2020-04-05"))) +
+  # geom_sf(data = county_polygons) +
+  geom_sf(aes(fill=roll_mean)) + 
+  geom_sf(data=data_to_plot[data_to_plot$roll_mean==0,],aes(geometry=geom.x),fill="white") +
+  scale_fill_viridis_c(name="7-day\nmoving average",na.value = "white",
+                       lim=c(min(data_to_plot$roll_mean[data_to_plot$roll_mean>0]),max(data_to_plot$roll_mean))) + 
+  labs(title="New cases per day per county, 7-day moving average",
+       subtitle = paste("Date: ","2020-04-05"),
+       caption = paste("Data: The New York Times, https://github.com/nytimes/covid-19-data
+       Plot: @VinCannataro on",Sys.Date(),"
+                       https://github.com/vcannataro/COVID19_data_explore"))
+
+rayshader::plot_gg(whole_USA_anim_roll,width = 6,height = 6,multicore = T, windowsize = c(1000, 1000))
+rayshader::render_movie(filename = "output_data/figures/whole_USA_rayshader_April_05_2020", type = "custom", 
+                        frames = 360,  phi = phivecfull, zoom = zoomvecfull, theta = thetavec)
+
+
+
+
+
+
+
 
 # rayshader::render_highquality(filename = "output_data/figures/whole_USA_rayshader_June_20_2020_hq", type = "custom", 
-                              # frames = 360,  phi = phivecfull, zoom = zoomvecfull, theta = thetavec)
+# frames = 360,  phi = phivecfull, zoom = zoomvecfull, theta = thetavec)
 # 
 # 
 # county_data_sf_NY <- county_data_sf[grep(x = county_data_sf$NAME,pattern = "New York"),]
