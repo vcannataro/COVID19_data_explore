@@ -211,7 +211,7 @@ county_data_sf <-  county_data_sf %>%
   mutate(num_date = as.numeric(date))
 
 
-date_to_plot <- "2020-06-17"
+date_to_plot <- "2020-06-20"
 data_to_plot <- county_data_sf %>%
   filter(date %in% as.Date(date_to_plot))
 
@@ -221,7 +221,7 @@ whole_USA_anim <- ggplot(data=data_to_plot) +
   geom_sf(data=data_to_plot[data_to_plot$roll_new_cases==0,],aes(geometry=geom.x),fill="white") +
   scale_fill_viridis_c(name="7-day\nmoving average") + 
   labs(title="New cases per day per county, 7-day moving average",
-       subtitle = paste("Date: ","2020-06-17"),
+       subtitle = paste("Date: ","2020-06-20"),
        caption = paste("Data: The New York Times, https://github.com/nytimes/covid-19-data
        Plot: @VinCannataro on",Sys.Date(),"
                        https://github.com/vcannataro/COVID19_data_explore")) #+ 
@@ -231,7 +231,7 @@ whole_USA_anim <- ggplot(data=data_to_plot) +
 # whole_USA_anim_mov <- gganimate::animate(whole_USA_anim,nframes=1000)
 # gganimate::anim_save(animation = whole_USA_anim_mov,filename = "output_data/figures/all_states_over_time.gif")
 
-rayshader::plot_gg(whole_USA_anim,width = 6,height = 6)
+rayshader::plot_gg(whole_USA_anim,width = 6,height = 6,multicore = F, windowsize = c(2000, 2000))
 rayshader::render_camera(theta = 0,phi = 90,zoom = .6,fov = 90)
 rayshader::render_snapshot()
 
@@ -245,10 +245,11 @@ zoomvec = 0.45 + 0.2 * 1/(1 + exp(seq(-5, 20, length.out = 180)))
 zoomvecfull = c(zoomvec, rev(zoomvec))
 
 # Actually render the video.
-rayshader::render_movie(filename = "output_data/figures/whole_USA_rayshader", type = "custom", 
+rayshader::render_movie(filename = "output_data/figures/whole_USA_rayshader_June_20_2020", type = "custom", 
              frames = 360,  phi = phivecfull, zoom = zoomvecfull, theta = thetavec)
 
-
+# rayshader::render_highquality(filename = "output_data/figures/whole_USA_rayshader_June_20_2020_hq", type = "custom", 
+                              # frames = 360,  phi = phivecfull, zoom = zoomvecfull, theta = thetavec)
 # 
 # 
 # county_data_sf_NY <- county_data_sf[grep(x = county_data_sf$NAME,pattern = "New York"),]

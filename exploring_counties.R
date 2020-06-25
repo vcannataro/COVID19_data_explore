@@ -1,9 +1,16 @@
 library(tidyverse)
 
+add_live <- F
 
 # load in latest data
 nytimes_county <- read.csv(file = "NY_Times_COVID19_data/covid-19-data/us-counties.csv",
                            stringsAsFactors = T)
+
+if(add_live){
+  nytimes_county_live <- read.csv(file = "NY_Times_COVID19_data/covid-19-data/live/us-counties.csv",
+                                  stringsAsFactors = T)  
+  nytimes_county <- dplyr::bind_rows(nytimes_county,nytimes_county_live)
+}
 
 # makes dates a date
 nytimes_county$date <- as.Date(nytimes_county$date,format = "%Y-%m-%d")
@@ -12,7 +19,7 @@ nytimes_county$date <- as.Date(nytimes_county$date,format = "%Y-%m-%d")
 # new cases per time point
 nytimes_data_lagged <- nytimes_county %>%
   group_by(state,county) %>%
-  mutate(lag_cases = cases - dplyr::lag(cases))
+  mutate(lag_cases = cases - dplyr::lag(cases,default = 0))
 
 # plotting some hometown data 
 
@@ -123,13 +130,21 @@ col_vec_collapse <- setNames(object = c("gray50",gg_color_hue(n =
 col_vec <- c(col_vec_collapse,setNames(object = rep("gray10",3),nm = c("New York","New Jersey","Massachusetts")))
 
 
+# rolling mean
+all_country <- all_country %>%
+  mutate(rolling_mean = zoo::rollmean(lag_cases,7,na.pad=T))
+
+
+
 all_states <- ggplot(data = all_country) + 
-  geom_bar(aes(x=date,y=lag_cases),stat="identity",alpha=0.5,fill="black") + 
+  # geom_bar(aes(x=date,y=lag_cases),stat="identity",alpha=0.5,fill="black") + 
   geom_bar(data = states_data_to_plot_collapse,
            aes(x=date,y=lag_cases,fill=state),
            stat="identity",
            alpha=1,
            position = "stack") + 
+  geom_line(aes(x=date,y=rolling_mean),
+            color="red",size=2,lineend = "round",linetype=1) + 
   theme_bw() +
   coord_cartesian(xlim=as.Date(c("2020-03-15",max(nytimes_county$date)))) + 
   scale_x_date(date_labels = "%b %d",date_breaks = "7 days") +
@@ -138,6 +153,7 @@ all_states <- ggplot(data = all_country) +
   labs(y="Total new cases per day", 
        x= "Date", 
        title = "Total new cases per day in the USA and select states",
+       subtitle="Red line indicates 7-day new cases rolling average in USA",
        caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro https://github.com/vcannataro/COVID19_data_explore")
 
 
@@ -168,6 +184,20 @@ cowplot::save_plot(plot = all_states_each_state_plot,
                    filename = "output_data/figures/all_states_VS_each_state.png",
                    base_height = 10,base_width = 8)
 
+
+
+
+
+
+nytimes_data_lagged %>% 
+  filter(state == "Massachusetts") %>%
+  filter(lag_cases>=0) %>%
+  mutate(roll_mean_lag_cases = zoo::rollmean(lag_cases,7,na.pad=T)) %>%
+  ggplot() + 
+  geom_bar(aes(x=date,y=lag_cases),stat="identity") + 
+  geom_line(aes(x=date, y=roll_mean_lag_cases),color="red",size=1,alpha=0.5) + 
+  facet_wrap(~county, scales = "free_y") + 
+  theme_bw()
 
 
 

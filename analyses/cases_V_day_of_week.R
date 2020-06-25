@@ -53,7 +53,9 @@ ggplot(data = nytimes_data_lagged_state) +
        x= "Date", 
        title = "Total new COVID19 cases per day in the USA",
        caption = paste("Data: The New York Times, https://github.com/nytimes/covid-19-data
-       Plot: @VinCannataro on",Sys.Date(),"https://github.com/vcannataro/COVID19_data_explore"))
+       Plot: @VinCannataro on",Sys.Date(),"https://github.com/vcannataro/COVID19_data_explore")) + 
+  scale_x_date(date_breaks = "1 week") + 
+  theme(axis.text.x = element_text(angle=90,hjust=1,vjust=0.5))
 
 ggsave(filename = "output_data/figures/cases_V_day_of_week.png")
 
