@@ -53,11 +53,11 @@ nytimes_county[nytimes_county$county == "Kansas City","fips"] <- 29095
 
 # fill in missing data
 nytimes_complete <- nytimes_county %>%
-  tidyr::complete(date = tidyr::full_seq(date, period = 1),
+  tidyr::complete(date = tidyr::full_seq(nytimes_county$date, period = 1),
                   fips,
                   fill=list(cases=0,deaths=0))
 
-
+# nytimes_complete %>% filter(county=="Suffolk" & state == "New York")
 
 # new cases per time point
 nytimes_complete <- nytimes_complete %>%
@@ -66,6 +66,14 @@ nytimes_complete <- nytimes_complete %>%
   # will join with this data soon
   select(-county,-state) %>%
   filter(lag_cases>=0)
+
+# View(nytimes_complete %>% filter(fips==1003))
+# nytimes_complete <- nytimes_complete %>%
+#   group_by(fips) %>%
+#   mutate(lag_cases = cases - dplyr::lag(cases)) %>%
+#   # will join with this data soon
+#   # select(-county,-state) %>%
+#   filter(lag_cases>=0)
 
 # maybe want: county-resolution map of new cases / people in the county. 
 
@@ -103,7 +111,7 @@ county_data <- county_data %>%
 
 # get county polygons 
 counties <- sf::st_as_sf(maps::map("county", plot = FALSE, fill = TRUE))
-county_polygons <- left_join(counties,maps::county.fips,by = c("ID"="polyname"))
+county_polygons <- dplyr::left_join(counties,maps::county.fips,by = c("ID"="polyname"))
 
 
 county_data <- left_join(county_data,county_polygons,by = "fips")
@@ -239,7 +247,8 @@ whole_USA_anim <- ggplot(data=data_to_plot) +
        subtitle = paste("Date: ","2020-06-20"),
        caption = paste("Data: The New York Times, https://github.com/nytimes/covid-19-data
        Plot: @VinCannataro on",Sys.Date(),"
-                       https://github.com/vcannataro/COVID19_data_explore")) #+ 
+                       https://github.com/vcannataro/COVID19_data_explore"))
+#+ 
 # theme_minimal() #+ 
 # gganimate::transition_manual(num_date)
 
