@@ -190,12 +190,12 @@ county_data <- county_data %>%
 
 # test_county <- county_data %>% filter(fips==1003)
 # zoo::rollmean(test_county$lag_cases_over_pop,7,na.pad=T) == test_county$roll_mean
-
-# test plot
-ggplot(data=county_data %>% filter(date == "2020-03-30" )) +
-  geom_sf(data = county_polygons) +
-  geom_sf(aes(geometry=geom,fill=roll_mean)) + 
-  scale_fill_gradient(low = "black",high= "red")
+# 
+# # test plot
+# ggplot(data=county_data %>% filter(date == "2020-03-30" )) +
+#   geom_sf(data = county_polygons) +
+#   geom_sf(aes(geometry=geom,fill=roll_mean)) + 
+#   scale_fill_gradient(low = "black",high= "red")
 
 
 
@@ -214,7 +214,7 @@ county_data_sf <- sf::st_transform(x = county_data_sf, 5070)
 
 
 data_subset_all <- county_data_sf %>% 
-  dplyr::filter(date == as.Date("2020-06-22")) 
+  dplyr::filter(date == as.Date("2020-06-23")) 
 
 
 
@@ -236,39 +236,64 @@ polygons <- polygons %>%
 
 
 library(rayrender)
+# 
+# scene <- generate_ground(depth=0,spheresize=1000, 
+#                          material=diffuse(color="#000000",
+#                                           noise=1/10,
+#                                           noisecolor = "#654321")) %>%
+#   add_object(extruded_polygon(polygons, center = T,data_column_top = "roll_new_cases",
+#                               scale_data = 1/max(polygons$roll_new_cases,na.rm = T)*5,
+#                               material= dielectric(color="darkgreen"#,
+#                                                    # attenuation = c(1,1,0.3)/200)
+#                               ),
+#                               material_id = 1)) %>%
+#   add_object(sphere(y=20,x=0,z = 0,radius=7,
+#                     material=light(color="lightblue",intensity=70)))
+
 
 scene <- generate_ground(depth=0,spheresize=1000, 
                          material=diffuse(color="#000000",
                                           noise=1/10,
                                           noisecolor = "#654321")) %>%
-  add_object(extruded_polygon(polygons, center = T,data_column_top = "roll_mean",
-                              scale_data = 1/max(polygons$roll_mean,na.rm = T)*5,
-                              material= dielectric(color="darkgreen"#,
-                                                   # attenuation = c(1,1,0.3)/200)
-                              ),
-                              material_id = 1)) %>%
-  add_object(sphere(y=20,x=0,z = 0,radius=7,
-                    material=light(color="lightblue",intensity=70)))
+  add_object(extruded_polygon(polygons, center = T,data_column_top = "roll_new_cases",
+                              scale_data = 1/max(polygons$roll_new_cases,na.rm = T)*5,
+                              material= diffuse(color="forestgreen"))) %>%
+  add_object(sphere(y=30,x=0,z = 0,radius=5,
+                    material=light(color="lightblue",intensity=50)))
 
-render_scene(scene = scene, parallel=TRUE,samples=60,
-             lookfrom = c(20,10,-15),fov=60,width=500, height=500)
+# render_scene(scene = scene, parallel=TRUE,samples=600,
+#              lookfrom = c(50,15,-15),fov=60,width=500, height=500)
 
 
 frames = 360
 
-camerax=-20*cos(seq(0,360,length.out = frames+1)[-frames-1]*pi/180)
-cameraz=20*sin(seq(0,360,length.out = frames+1)[-frames-1]*pi/180)
+camerax=-35*cos(seq(0,360,length.out = frames+1)[-frames-1]*pi/180)
+cameraz=35*sin(seq(0,360,length.out = frames+1)[-frames-1]*pi/180)
 
-render_scene(scene = scene, parallel=TRUE,samples=600,
-             lookfrom = c(camerax[180],10,cameraz[180]),fov=60,width=500, height=500)
+# render_scene(scene = scene, parallel=TRUE,samples=600,
+#              lookfrom = c(camerax[1],10,cameraz[1]),fov=60,width=500, height=500)
 
 
+for(i in 1:frames) {
+  
+  render_scene(scene, width=500, height=500, fov=60,
+               lookfrom = c(camerax[i], 7, cameraz[i]),
+               samples = 400, parallel = TRUE,
+               filename=glue::glue("output_data/figures/tests/frames/USA_diffuse{i}.png"))
+  print(i)
+}
 
-av::av_capture_graphics(expr = {
-  for(i in 1:frames) {
-    render_scene(scene, width=500, height=500, fov=60,
-                 lookfrom = c(camerax[i], 7, cameraz[i]),samples = 400, parallel = TRUE)
-    print(i)
-  }
-}, width=500,height=500, framerate = 60, output = "output_data/figures/tests/USA_rotate.mp4")
+av::av_encode_video(glue::glue("output_data/figures/tests/frames/USA_diffuse{1:(frames-1)}.png"),
+                    framerate=60, output = "output_data/figures/tests/USA_rotate_diffuse.mp4")
+file.remove(glue::glue("output_data/figures/tests/frames/USA_diffuse{1:(frames-1)}.png"))
 
+
+# # 
+# av::av_capture_graphics(expr = {
+#   for(i in 1:frames) {
+#     render_scene(scene, width=500, height=500, fov=60,
+#                  lookfrom = c(camerax[i], 7, cameraz[i]),samples = 400, parallel = TRUE)
+#     print(i)
+#   }
+# }, width=500,height=500, framerate = 60, output = "output_data/figures/tests/USA_rotate_diffuse.mp4")
+# 
