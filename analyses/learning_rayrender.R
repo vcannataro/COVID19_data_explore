@@ -212,6 +212,9 @@ polygons <- polygons %>%
   filter(!is.na(roll_mean))
 
 
+# testing different scenarios 
+
+
 scene <- generate_ground(depth=0,spheresize=1000, 
                          material=diffuse(color="#000000",
                                           noise=1/10,
@@ -225,13 +228,77 @@ scene <- generate_ground(depth=0,spheresize=1000,
                     material=light(color="lightblue",intensity=60)))
 
 render_scene(scene = scene, parallel=TRUE,samples=400,
-             lookfrom = c(0,15,-15),fov=40,width=500, height=500)
+             lookfrom = c(0,20,-20),fov=60,width=500, height=500)
 
+
+scene <- generate_ground(depth=0,spheresize=1000, 
+                         material=diffuse(color="#000000",
+                                          noise=1/10,
+                                          noisecolor = "#654321")) %>%
+  add_object(extruded_polygon(polygons, center = T,data_column_top = "roll_mean",
+                              scale_data = 1/max(polygons$roll_mean,na.rm = T)*5,
+                              material= dielectric(color="darkgreen"),
+                              # attenuation = c(1,1,0.3)/200),
+                              material_id = 1))# %>%
+  # add_object(sphere(y=20,x=0,z = 0,radius=7,
+                    # material=light(color="lightblue",intensity=60)))
+
+render_scene(scene = scene, parallel=TRUE,samples=400,
+             lookfrom = c(10,20,-20),fov=60,width=500, height=500)
 # 
 # scene = generate_ground(depth=-0.5, material = diffuse(color="white", checkercolor="darkgreen"))
 # scene = scene %>%
 #   add_object(sphere(x=0,y=1,z=2,radius=0.5,material = diffuse(color=c(1,0,1))))
 # render_scene(scene,fov=20,parallel=TRUE,samples=5)
+scene <- generate_ground(depth=0,spheresize=1000, 
+                         material=diffuse(color="#000000",
+                                          noise=1/10,
+                                          noisecolor = "#654321")) %>%
+  add_object(extruded_polygon(polygons, center = T,data_column_top = "roll_mean",
+                              scale_data = 1/max(polygons$roll_mean,na.rm = T)*5,
+                              material= diffuse(color="darkgreen"))) %>%
+               add_object(sphere(y=25,x=0,z = 0,radius=7,
+                                 material=light(color="lightblue",intensity=60)))
+
+render_scene(scene = scene, parallel=TRUE,samples=400,
+             lookfrom = c(10,20,-20),fov=60,width=500, height=500)
 
 
+
+
+
+scene <- generate_ground(depth=0,spheresize=1000, 
+                         material=diffuse(color="#000000",
+                                          noise=1/10,
+                                          noisecolor = "#654321")) %>%
+  add_object(extruded_polygon(polygons, center = T,data_column_top = "roll_mean",
+                              scale_data = 1/max(polygons$roll_mean,na.rm = T)*5,
+                              material= dielectric(color="darkgreen"#,
+                                                   # attenuation = c(1,1,0.3)/200)
+                              ),
+                              material_id = 1)) %>%
+  add_object(sphere(y=22,x=0,z = 0,radius=7,
+                    material=light(color="lightblue",intensity=60)))
+
+render_scene(scene = scene, parallel=TRUE,samples=600,
+             lookfrom = c(20,10,-15),fov=60,width=500, height=500)
+
+
+frames = 360
+
+camerax=-20*cos(seq(0,360,length.out = frames+1)[-frames-1]*pi/180)
+cameraz=20*sin(seq(0,360,length.out = frames+1)[-frames-1]*pi/180)
+
+render_scene(scene = scene, parallel=TRUE,samples=600,
+             lookfrom = c(camerax[180],10,cameraz[180]),fov=60,width=500, height=500)
+
+
+
+av::av_capture_graphics(expr = {
+  for(i in 1:frames) {
+    render_scene(scene, width=500, height=500, fov=60,
+                 lookfrom = c(camerax[i], 7, cameraz[i]),samples = 400, parallel = TRUE)
+    print(i)
+  }
+}, width=500,height=500, framerate = 60, output = "output_data/figures/tests/USA_rotate.mp4")
 
