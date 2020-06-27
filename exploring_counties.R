@@ -20,6 +20,10 @@ nytimes_county$date <- as.Date(nytimes_county$date,format = "%Y-%m-%d")
 nytimes_data_lagged <- nytimes_county %>%
   group_by(state,county) %>%
   mutate(lag_cases = cases - dplyr::lag(cases,default = 0))
+# 
+# nytimes_data_lagged %>% filter(state == "Wisconsin") %>%
+#   filter(date %in% as.Date(c("2020-06-25","2020-06-26"))) %>% View()
+
 
 # plotting some hometown data 
 
@@ -152,7 +156,7 @@ all_states <- ggplot(data = all_country) +
   theme(axis.text.x = element_text(angle = 25,hjust = 1,vjust = 1)) +
   labs(y="Total new cases per day", 
        x= "Date", 
-       title = "Total new cases per day in the USA and select states",
+       title = "Total new COVID19 cases per day in the USA and select states",
        subtitle="Red line indicates 7-day new cases rolling average in USA",
        caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro https://github.com/vcannataro/COVID19_data_explore")
 
