@@ -214,7 +214,7 @@ county_data_sf <- sf::st_transform(x = county_data_sf, 5070)
 
 
 # data_subset_all <- county_data_sf #%>% 
-  # dplyr::filter(date == as.Date("2020-06-23")) 
+# dplyr::filter(date == as.Date("2020-06-23")) 
 
 
 
@@ -305,7 +305,15 @@ library(rayrender)
 #              lookfrom = c(camerax[1],10,cameraz[1]),fov=60,width=500, height=500)
 dates_to_pull <- seq(min(polygons$date),max(polygons$date),by = 1)
 
-for(i in 1:length(dates_to_pull)) {
+
+
+
+
+
+# just the last date
+
+
+for(i in length(dates_to_pull)) {
   
   
   test_first <- polygons %>%
@@ -346,7 +354,7 @@ for(i in 1:length(dates_to_pull)) {
       width=875,height=500)
   render_scene(scene = scene, lookat = c(80,0,38),lookfrom = c(70.5,9,29.5),
                parallel=T,samples=500,fov=70,width=875,height=500)
-
+  
   # render_scene(scene = scene, lookat = c(80,0,38),lookfrom = c(70.5,9,29.5), 
   #              parallel=T,samples=500,fov=70,width=875,height=500)
   text(x = 800,y = 450,labels = dates_to_pull[i],col = "white",cex=1.6)
@@ -366,24 +374,38 @@ for(i in 1:length(dates_to_pull)) {
 
 frames = 360
 
-camerax1=-34*(cos(seq(0,360,length.out = frames+1)[-frames-1]*pi/180))+95 
-cameraz1=15*sin(seq(0,360,length.out = frames+1)[-frames-1]*pi/180) + 32.5
+camerax1=-34*(cos(seq(0,360,length.out = frames+1)[-frames-1]*pi/180))+105 
+cameraz1=18*sin(seq(0,360,length.out = frames+1)[-frames-1]*pi/180) + 32.5
 # 
 # cameray1 <- -1*(cos(seq(0,360,length.out = frames+1)[-frames-1]*pi/180)) + 10
 # 
 # # 
-# render_scene(scene = scene, lookat = c(95,0,38),lookfrom = c(67,9,32.5),
+# render_scene(scene = scene, lookat = c(105,0,38),lookfrom = c(67,9,32.5),
 #              parallel=T,samples=50,fov=70,width=875,height=500)
 # 
-
-# render_scene(scene = scene, lookat = c(95,0,38),lookfrom = c(135,9,32.5),
-#              parallel=T,samples=50,fov=70,width=875,height=500)
-
-# render_scene(scene = scene, lookat = c(95,0,38),lookfrom = c(101,9,55),
+# 
+# render_scene(scene = scene, lookat = c(105,0,38),lookfrom = c(138,9,32.5),
 #              parallel=T,samples=50,fov=70,width=875,height=500)
 # 
-# render_scene(scene = scene, lookat = c(95,0,38),lookfrom = c(101,9,15),
+# # render_scene(scene = scene, lookat = c(105,0,38),lookfrom = c(101,9,55),
+# #              parallel=T,samples=50,fov=70,width=875,height=500)
+# #
+# # render_scene(scene = scene, lookat = c(105,0,38),lookfrom = c(101,9,15),
+# #              parallel=T,samples=50,fov=70,width=875,height=500)
+
+
+
+
+# testing angles 
+# render_scene(scene = scene, lookat = c(105,0,38),lookfrom = c(105.5,40,38),
 #              parallel=T,samples=50,fov=70,width=875,height=500)
+# 
+# for( i in 1:5){
+#   render_scene(scene = scene, lookat = c(105,0,38),lookfrom = c(camerax1[floor((360/5)*i)],9,cameraz1[floor((360/5)*i)]),
+#                            parallel=T,samples=50,fov=70,width=875,height=500)
+#                print(floor((360/5)*i))
+# }
+
 
 
 for(i in 1:frames){
@@ -391,7 +413,7 @@ for(i in 1:frames){
   j <- i + (length(dates_to_pull))
   png(filename = glue::glue("output_data/figures/tests/frames/USA_diffuse_over_time_scaled{j}.png"),
       width=875,height=500)
-  render_scene(scene = scene, lookat = c(90,0,38),lookfrom = c(camerax1[i],9,cameraz1[i]),
+  render_scene(scene = scene, lookat = c(105,0,38),lookfrom = c(camerax1[i],9,cameraz1[i]),
                parallel=T,samples=50,fov=70,width=875,height=500)
   
   # render_scene(scene = scene, lookat = c(80,0,38),lookfrom = c(70.5,9,29.5), 
@@ -413,7 +435,7 @@ for(i in 1:frames){
 
 total_count <- frames + length(dates_to_pull)
 
-av::av_encode_video(glue::glue("output_data/figures/tests/frames/USA_diffuse_over_time_scaled{1:(frames-1)}.png"),
+av::av_encode_video(glue::glue("output_data/figures/tests/frames/USA_diffuse_over_time_scaled{1:(total_count-1)}.png"),
                     framerate=10, output = "output_data/figures/tests/USA_diffuse_over_time_scaled.mp4",
                     vfilter = "pad=ceil(iw/2)*2:ceil(ih/2)*2")
 # file.remove(glue::glue("output_data/figures/tests/frames/USA_diffuse_over_time{1:(frames-1)}.png"))
