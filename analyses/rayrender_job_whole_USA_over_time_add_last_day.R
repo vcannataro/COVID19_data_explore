@@ -172,7 +172,7 @@ NYC_pop <- sum(unlist(NYC_pop[,"estimate"]))
 
 
 county_data[NYC_index,"lag_cases_over_pop"] <- county_data[NYC_index,"lag_cases"]/NYC_pop
-
+county_data[NYC_index,"estimate"] <- NYC_pop
 
 
 
@@ -220,7 +220,7 @@ county_data_sf <- sf::st_transform(x = county_data_sf, 5070)
 
 # ny_county_polygons <- county_polygons[grep(pattern = "new york",x = county_polygons$ID),]
 
-data_subset_just_params <- county_data_sf[,c("ID.x","cases","lag_cases","roll_mean","roll_new_cases","date")]
+data_subset_just_params <- county_data_sf[,c("ID.x","cases","lag_cases","roll_mean","roll_new_cases","date","estimate")]
 
 data_subset_just_params <- data_subset_just_params %>%
   mutate(ID=ID.x)
