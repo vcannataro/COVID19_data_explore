@@ -220,7 +220,7 @@ county_data_sf <- sf::st_transform(x = county_data_sf, 5070)
 
 # ny_county_polygons <- county_polygons[grep(pattern = "new york",x = county_polygons$ID),]
 
-data_subset_just_params <- county_data_sf[,c("ID.x","cases","lag_cases","roll_mean","roll_new_cases","date")]
+data_subset_just_params <- county_data_sf[,c("ID.x","cases","lag_cases","roll_mean","roll_new_cases","date","estimate")]
 
 data_subset_just_params <- data_subset_just_params %>%
   mutate(ID=ID.x)
@@ -436,7 +436,7 @@ for(i in 1:frames){
 total_count <- frames + length(dates_to_pull)
 
 av::av_encode_video(glue::glue("output_data/figures/tests/frames/USA_diffuse_over_time_scaled{1:(total_count-1)}.png"),
-                    framerate=10, output = "output_data/figures/tests/USA_diffuse_over_time_scaled.mp4",
+                    framerate=6, output = "output_data/figures/tests/USA_diffuse_over_time_scaled.mp4",
                     vfilter = "pad=ceil(iw/2)*2:ceil(ih/2)*2")
 # file.remove(glue::glue("output_data/figures/tests/frames/USA_diffuse_over_time{1:(frames-1)}.png"))
 
