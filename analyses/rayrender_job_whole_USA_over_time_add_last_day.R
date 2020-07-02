@@ -172,7 +172,7 @@ NYC_pop <- sum(unlist(NYC_pop[,"estimate"]))
 
 
 county_data[NYC_index,"lag_cases_over_pop"] <- county_data[NYC_index,"lag_cases"]/NYC_pop
-
+county_data[NYC_index,"estimate"] <- NYC_pop
 
 
 
