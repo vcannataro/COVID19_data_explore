@@ -415,7 +415,7 @@ cameraz1=18*sin(seq(0,360,length.out = frames+1)[-frames-1]*pi/180) + 32.5
 # new lookat 
 # lookat = c(105,0,38)
 
-lookat_x <- c(seq(from=90,to=105, length.out = 60),rep(105,300))
+lookat_x <- c(seq(from=80,to=105, length.out = 60),rep(105,300))
 
 
 
@@ -447,7 +447,7 @@ for(i in 1:frames){
 total_count <- frames + length(dates_to_pull)
 
 av::av_encode_video(glue::glue("output_data/figures/tests/frames/USA_diffuse_over_time_scaled{1:(total_count-1)}.png"),
-                    framerate=6, output = "output_data/figures/tests/USA_diffuse_over_time_scaled.mp4",
+                    framerate=8, output = "output_data/figures/tests/USA_diffuse_over_time_scaled.mp4",
                     vfilter = "pad=ceil(iw/2)*2:ceil(ih/2)*2")
 # file.remove(glue::glue("output_data/figures/tests/frames/USA_diffuse_over_time{1:(frames-1)}.png"))
 
