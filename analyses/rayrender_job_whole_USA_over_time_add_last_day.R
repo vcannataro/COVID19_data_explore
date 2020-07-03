@@ -306,14 +306,14 @@ library(rayrender)
 dates_to_pull <- seq(min(polygons$date),max(polygons$date),by = 1)
 
 
+load("analyses/last_date.RData")
+
+dates_to_loop <- seq.Date(last_date+1,max(polygons$date),by = 1)
+
+# just the last few dates date
 
 
-
-
-# just the last date
-
-
-for(i in length(dates_to_pull)) {
+for(i in which(dates_to_pull %in% dates_to_loop)) {
   
   
   test_first <- polygons %>%
@@ -370,7 +370,9 @@ for(i in length(dates_to_pull)) {
   print(i)
 }
 
-
+# save the last date so we may load it as the start next time
+last_date <- max(polygons$date)
+save(last_date,file = "analyses/last_date.RData")
 
 frames = 360
 
@@ -407,13 +409,22 @@ cameraz1=18*sin(seq(0,360,length.out = frames+1)[-frames-1]*pi/180) + 32.5
 # }
 
 
+# old lookat 
+# lookat = c(90,0,38)
+
+# new lookat 
+# lookat = c(105,0,38)
+
+lookat_x <- c(seq(from=90,to=105, length.out = 60),rep(105,300))
+
+
 
 for(i in 1:frames){
   
   j <- i + (length(dates_to_pull))
   png(filename = glue::glue("output_data/figures/tests/frames/USA_diffuse_over_time_scaled{j}.png"),
       width=875,height=500)
-  render_scene(scene = scene, lookat = c(105,0,38),lookfrom = c(camerax1[i],9,cameraz1[i]),
+  render_scene(scene = scene, lookat = c(lookat_x[i],0,38),lookfrom = c(camerax1[i],9,cameraz1[i]),
                parallel=T,samples=50,fov=70,width=875,height=500)
   
   # render_scene(scene = scene, lookat = c(80,0,38),lookfrom = c(70.5,9,29.5), 
