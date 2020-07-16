@@ -55,9 +55,16 @@ just_MA <- nytimes_data_lagged %>%
   ungroup() %>%
   mutate(lag_cases_rollmean = zoo::rollmean(x = total_lag_cases,7,na.pad=T))
 
+just_MA_last_date <- just_MA %>%
+  filter(date == max(date))
+
 
 all_MA_plot <- ggplot(just_MA) + 
   geom_bar(aes(x=date,y=total_lag_cases),stat="identity") + 
+  geom_segment(data = just_MA_last_date,
+               aes(x=date-5, y=total_lag_cases+900,yend=total_lag_cases,xend=date)) + 
+  geom_label(data = just_MA_last_date, 
+             aes(x=date-5, y=total_lag_cases+900,label=paste(total_lag_cases,"\nnew cases"))) +
   theme_bw() + 
   geom_line(aes(x=date,y=lag_cases_rollmean),col="red") + 
   labs(y="New cases per day in MA", x="Date",title="New cases per day in MA", 
@@ -70,9 +77,16 @@ all_MA_plot <- ggplot(just_MA) +
 MA_counties <- nytimes_data_lagged %>% 
   filter(state=="Massachusetts") 
 
+MA_counties_last_date <- MA_counties %>%
+  filter(date == max(date))
+
 MA_counties_plot <- MA_counties %>% 
   ggplot() + 
   geom_bar(aes(x=date,y=lag_cases),stat="identity") + 
+  # geom_segment(data = MA_counties_last_date,
+  #              aes(x=date-5, y=lag_cases+900,yend=lag_cases,xend=date)) + 
+  # geom_label(data = MA_counties_last_date, 
+  #            aes(x=date-5, y=lag_cases+900,label=paste(lag_cases,"\nnew cases"))) +
   facet_wrap(~county, scales = "free_y") + 
   theme_bw() + 
   geom_line(aes(x=date,y=lag_cases_rollmean),col="red") + 
