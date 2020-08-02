@@ -73,6 +73,24 @@ all_MA_plot <- ggplot(just_MA) +
 
 
 
+all_MA_plot_recent<- ggplot(just_MA %>%
+                                 filter(date > "2020-06-15")) + 
+  geom_bar(aes(x=date,y=total_lag_cases),stat="identity") + 
+  # geom_segment(data = just_MA_last_date,
+  #              aes(x=date-1, y=total_lag_cases+150,yend=total_lag_cases,xend=date)) + 
+  # geom_label(data = just_MA_last_date, 
+  #            aes(x=date-1, y=total_lag_cases+150,label=paste(total_lag_cases,"\nnew cases"))) +
+  theme_bw() + 
+  # scale_x_date(limits = as.Date(c("2020-06-15",max(just_MA$date)))) + 
+  geom_line(aes(x=date,y=lag_cases_rollmean),col="red",size=3 , lineend="round") + 
+  labs(y="New cases per day in MA", x="Date",title="New cases per day in MA", 
+       subtitle="Red line indicates 7-day rolling mean",
+       caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro https://github.com/vcannataro/COVID19_data_explore")+ 
+  theme(axis.text = element_text(size=20),
+        text = element_text(size = 20))
+
+ggsave(filename = "output_data/figures/MA_state_recent_cases.png",plot = all_MA_plot_recent)
+
 
 MA_counties <- nytimes_data_lagged %>% 
   filter(state=="Massachusetts") 
