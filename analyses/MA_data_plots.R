@@ -121,8 +121,8 @@ cowplot::save_plot(filename = "output_data/figures/MA_plot_state_and_counties.pn
 
 
 
-
-
+write.csv(x = MA_counties %>% arrange(county),file = "output_data/cleaned_data/MA_counties.csv",quote = F,row.names = F)
+write.csv(x = just_MA ,file = "output_data/cleaned_data/MA_state.csv",quote = F,row.names = F)
 
 # 
 # nytimes_data_lagged %>%
