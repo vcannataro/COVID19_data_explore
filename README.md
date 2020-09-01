@@ -2,6 +2,8 @@ Repository to explore COVID19 data.
 
 I am using these data to learn how to clean + plot time series and spatial data. No medical or scientific conclusions should be made using the analyses within this repository. 
 
+**It appears that MA stopped updated their cases daily on Aug 12 2020 (https://covidtracking.com/data/state/massachusetts) so daily case MA-specific plots are no longer reliable within this repo. See covidtracking link for MA plots.** 
+
 Figures are updated within the [figures subfolder](https://github.com/vcannataro/COVID19_data_explore/tree/master/output_data/figures)
 
 Spatial data exploration movies are mainly within [tests](https://github.com/vcannataro/COVID19_data_explore/tree/master/output_data/figures/tests)
