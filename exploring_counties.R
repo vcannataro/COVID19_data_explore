@@ -31,6 +31,12 @@ ggplot(nytimes_data_lagged %>% filter(state=="New York" & county=="Suffolk")) +
   geom_bar(aes(x=date,y=lag_cases), stat = "identity") + 
   theme_bw()
 
+# 
+# ggplot(nytimes_data_lagged %>% filter(state=="New York" & county=="Suffolk" & date > "2020-07-01")) +
+#   geom_bar(aes(x=date,y=lag_cases), stat = "identity") + 
+#   theme_bw()
+
+
 # ggplot(nytimes_data_lagged %>% filter(state=="New York"))+
 #   geom_bar(aes(x=date,y=lag_cases), stat = "identity") + 
 #   theme_bw()
