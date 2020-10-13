@@ -70,7 +70,7 @@ NE_states_plot <- ggplot(nytimes_data_lagged_state_NE) +
   labs(y="New cases",x="Date",
        caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro https://github.com/vcannataro/COVID19_data_explore")
 
-ggsave(plot = NE_states_plot,filename = "output_data/figures/NE_states_plot.png")
+ggsave(plot = NE_states_plot,filename = "output_data/figures/NE_states_plot.png",width = 8,height = 3)
 
 
 # 

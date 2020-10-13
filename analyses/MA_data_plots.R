@@ -89,7 +89,7 @@ all_MA_plot_recent<- ggplot(just_MA %>%
   theme(axis.text = element_text(size=20),
         text = element_text(size = 20))
 
-ggsave(filename = "output_data/figures/MA_state_recent_cases.png",plot = all_MA_plot_recent)
+ggsave(filename = "output_data/figures/MA_state_recent_cases.png",plot = all_MA_plot_recent,height = 6,width = 8)
 
 
 MA_counties <- nytimes_data_lagged %>% 
