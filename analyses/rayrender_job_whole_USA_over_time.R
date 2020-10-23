@@ -6,6 +6,7 @@ library(tidycensus)
 library(magrittr)
 library(zoo)
 library(sf)
+library(viridis)
 
 # load in latest data
 nytimes_county <- read.csv(file = "NY_Times_COVID19_data/covid-19-data/us-counties.csv",
@@ -93,6 +94,7 @@ nytimes_complete <- nytimes_complete %>%
 load("output_data/county_pop.RData")
 
 county_pop$GEOID <- as.numeric(county_pop$GEOID) # change to numeric to match NYTIMES 
+
 # nytimes_data_lagged$fips
 
 # need to match up certain NYT data choices with FIPS
@@ -214,7 +216,7 @@ county_data_sf <- sf::st_transform(x = county_data_sf, 5070)
 
 
 # data_subset_all <- county_data_sf #%>% 
-  # dplyr::filter(date == as.Date("2020-06-23")) 
+# dplyr::filter(date == as.Date("2020-06-23")) 
 
 
 
@@ -305,48 +307,82 @@ library(rayrender)
 #              lookfrom = c(camerax[1],10,cameraz[1]),fov=60,width=500, height=500)
 dates_to_pull <- seq(min(polygons$date),max(polygons$date),by = 1)
 
+
+polygons <- polygons %>%
+  mutate(roll_mean = roll_mean + 1e-6) %>% # add a bit to each to improve rendering of zero 
+  mutate(roll_mean_cuts = cut(roll_mean,breaks = 200,include.lowest = T)) # break into 200 cuts
+
+# polygons$roll_mean_cuts
+
+# 0.0009935217
+# 0.001
+
+# findInterval(x = 3e-6,seq(from = min(polygons$roll_mean), to = 0.001,length.out = 100))
+# findInterval(x = .1,)
+
+col_picks <- setNames(object = plasma(200),nm = levels(polygons$roll_mean_cuts)) # each cut has a color, to be assigned at adding to the scene. 
+# test_scene_date <- polygons %>% filter(date == "2020-05-02")
+
+plasma_cols <- plasma(100)
+plasma_breaks <- seq(from = min(polygons$roll_mean), to = 0.001,length.out = 100)
+
+# i <- 182
+
+polygons <- polygons %>%
+  mutate(roll_mean_color = plasma_cols[findInterval(x = roll_mean, vec = plasma_breaks)])
+
+
 for(i in 1:length(dates_to_pull)) {
   
   
-  test_first <- polygons %>%
+  these_polys <- polygons %>%
     filter(date == dates_to_pull[i])
   
-  # test_max <- test_first[which(test_first$roll_new_cases == max(test_first$roll_new_cases)),]
+  # these_polys <- these_polys[grep(pattern = "florida",x = these_polys$ID),]
   
-  # scaled by population, scaled by max of that day 
+  scene <- generate_ground(depth=0,spheresize=5000, 
+                           material=diffuse(color="#000000",
+                                            noise=1/10,
+                                            noisecolor = "#654321"))
+  
+  
+  for(county_ind in 1:nrow(these_polys)){
+    
+    
+    
+    scene <- scene %>% 
+      add_object(extruded_polygon(these_polys[county_ind,], center = F,data_column_top = "roll_mean",
+                                  scale_data = 1/max(polygons$roll_mean,na.rm = T)*100,
+                                  material= diffuse(color=these_polys$roll_mean_color[county_ind])))
+    # print(county_ind/nrow(these_polys))
+  }
+  # add_object(extruded_polygon(test_max, center = F,data_column_top = "roll_new_cases",
+  #                             scale_data = 1/max(polygons$roll_new_cases,na.rm = T)*5,
+  #                             material= light(color="forestgreen",intensity = 1))) %>%
+  scene <- scene %>% 
+    add_object(sphere(y=20,x=90,z = 45,radius=5,
+                      material=light(color="white",intensity=50)))
+  
+  
   # scene <- generate_ground(depth=0,spheresize=5000, 
   #                          material=diffuse(color="#000000",
   #                                           noise=1/10,
   #                                           noisecolor = "#654321")) %>%
   #   add_object(extruded_polygon(test_first, center = F,data_column_top = "roll_mean",
-  #                               scale_data = 1/max(test_first$roll_mean,na.rm = T)*5,
+  #                               scale_data = 1/max(polygons$roll_mean,na.rm = T)*75,
   #                               material= diffuse(color="forestgreen"))) %>%
   #   # add_object(extruded_polygon(test_max, center = F,data_column_top = "roll_new_cases",
   #   #                             scale_data = 1/max(polygons$roll_new_cases,na.rm = T)*5,
   #   #                             material= light(color="forestgreen",intensity = 1))) %>%
   #   add_object(sphere(y=20,x=90,z = 45,radius=5,
   #                     material=light(color="lightblue",intensity=50)))
-  # 
-  
-  scene <- generate_ground(depth=0,spheresize=5000, 
-                           material=diffuse(color="#000000",
-                                            noise=1/10,
-                                            noisecolor = "#654321")) %>%
-    add_object(extruded_polygon(test_first, center = F,data_column_top = "roll_mean",
-                                scale_data = 1/max(polygons$roll_mean,na.rm = T)*75,
-                                material= diffuse(color="forestgreen"))) %>%
-    # add_object(extruded_polygon(test_max, center = F,data_column_top = "roll_new_cases",
-    #                             scale_data = 1/max(polygons$roll_new_cases,na.rm = T)*5,
-    #                             material= light(color="forestgreen",intensity = 1))) %>%
-    add_object(sphere(y=20,x=90,z = 45,radius=5,
-                      material=light(color="lightblue",intensity=50)))
   
   
   png(filename = glue::glue("output_data/figures/tests/frames/USA_diffuse_over_time_scaled{i}.png"),
       width=875,height=500)
   render_scene(scene = scene, lookat = c(80,0,38),lookfrom = c(70.5,9,29.5),
                parallel=T,samples=500,fov=70,width=875,height=500)
-
+  
   # render_scene(scene = scene, lookat = c(80,0,38),lookfrom = c(70.5,9,29.5), 
   #              parallel=T,samples=500,fov=70,width=875,height=500)
   text(x = 800,y = 450,labels = dates_to_pull[i],col = "white",cex=1.6)
@@ -366,8 +402,8 @@ for(i in 1:length(dates_to_pull)) {
 
 frames = 360
 
-camerax1=-34*(cos(seq(0,360,length.out = frames+1)[-frames-1]*pi/180))+95 
-cameraz1=15*sin(seq(0,360,length.out = frames+1)[-frames-1]*pi/180) + 32.5
+camerax1=-34*(cos(seq(0,360,length.out = frames+1)[-frames-1]*pi/180))+105 
+cameraz1=18*sin(seq(0,360,length.out = frames+1)[-frames-1]*pi/180) + 32.5
 # 
 # cameray1 <- -1*(cos(seq(0,360,length.out = frames+1)[-frames-1]*pi/180)) + 10
 # 
@@ -384,14 +420,14 @@ cameraz1=15*sin(seq(0,360,length.out = frames+1)[-frames-1]*pi/180) + 32.5
 # 
 # render_scene(scene = scene, lookat = c(95,0,38),lookfrom = c(101,9,15),
 #              parallel=T,samples=50,fov=70,width=875,height=500)
-
+lookat_x <- c(seq(from=80,to=105, length.out = 60),rep(105,300))
 
 for(i in 1:frames){
   
   j <- i + (length(dates_to_pull))
   png(filename = glue::glue("output_data/figures/tests/frames/USA_diffuse_over_time_scaled{j}.png"),
       width=875,height=500)
-  render_scene(scene = scene, lookat = c(90,0,38),lookfrom = c(camerax1[i],9,cameraz1[i]),
+  render_scene(scene = scene, lookat = c(lookat_x[i],0,38),lookfrom = c(camerax1[i],9,cameraz1[i]),
                parallel=T,samples=50,fov=70,width=875,height=500)
   
   # render_scene(scene = scene, lookat = c(80,0,38),lookfrom = c(70.5,9,29.5), 
@@ -413,7 +449,7 @@ for(i in 1:frames){
 
 total_count <- frames + length(dates_to_pull)
 
-av::av_encode_video(glue::glue("output_data/figures/tests/frames/USA_diffuse_over_time_scaled{1:(frames-1)}.png"),
+av::av_encode_video(glue::glue("output_data/figures/tests/frames/USA_diffuse_over_time_scaled{1:(total_count-1)}.png"),
                     framerate=10, output = "output_data/figures/tests/USA_diffuse_over_time_scaled.mp4",
                     vfilter = "pad=ceil(iw/2)*2:ceil(ih/2)*2")
 # file.remove(glue::glue("output_data/figures/tests/frames/USA_diffuse_over_time{1:(frames-1)}.png"))
