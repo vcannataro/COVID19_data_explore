@@ -21,7 +21,8 @@ nytimes_data_lagged <- nytimes_county %>%
   group_by(state,county) %>%
   mutate(lag_cases = cases - dplyr::lag(cases,default = 0)) %>%
   filter(lag_cases >= 0) %>%
-  filter(county != "Unknown") %>%
+  # filter(county != "Unknown") %>%
+  mutate(county = dplyr::recode(county, Unknown = "County not specified")) %>%
   mutate(lag_cases_rollmean = zoo::rollmean(x = lag_cases,7,na.pad=T))
 # 
 # nytimes_data_lagged %>% filter(state == "Wisconsin") %>%
