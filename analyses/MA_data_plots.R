@@ -63,9 +63,9 @@ just_MA_last_date <- just_MA %>%
 all_MA_plot <- ggplot(just_MA) + 
   geom_bar(aes(x=date,y=total_lag_cases),stat="identity") + 
   geom_segment(data = just_MA_last_date,
-               aes(x=date-5, y=total_lag_cases+900,yend=total_lag_cases,xend=date)) + 
+               aes(x=date-5, y=total_lag_cases+1500,yend=total_lag_cases,xend=date),alpha=0.4,color="blue") + 
   geom_label(data = just_MA_last_date, 
-             aes(x=date-5, y=total_lag_cases+900,label=paste(total_lag_cases,"\nnew cases"))) +
+             aes(x=date-5, y=total_lag_cases+1500,label=paste(total_lag_cases,"\nnew cases"))) +
   theme_bw() + 
   scale_x_date(date_breaks = "2 weeks",date_labels = "%b %d") + 
   theme(axis.text.x = element_text(angle = 45,hjust=1)) + 
