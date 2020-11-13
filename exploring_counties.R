@@ -162,7 +162,7 @@ all_states <- ggplot(data = all_country) +
   coord_cartesian(xlim=as.Date(c("2020-03-15",max(nytimes_county$date)))) + 
   scale_x_date(date_labels = "%b %d",date_breaks = "14 days") +
   scale_fill_manual(values = col_vec_collapse, name="State") + 
-  scale_y_continuous(labels = scales::comma,breaks = c(0,2.5e4,5e4,7.5e4,1e5,1.25e5)) + 
+  scale_y_continuous(labels = scales::comma) + 
   theme(axis.text.x = element_text(angle = 25,hjust = 1,vjust = 1)) +
   labs(y="Total new cases per day", 
        x= "Date", 
