@@ -151,7 +151,7 @@ MA_cumulative <- nytimes_county %>%
 
 just_MA %>% 
   left_join(x = just_MA,y = MA_cumulative,by = "date") %>%
-  mutate(total_cases = cumsum(total_lag_cases)) %>%
+  # mutate(total_cases = cumsum(total_lag_cases)) %>%
   arrange(desc(date)) %>%
   mutate(lag_cases_rollmean = round(lag_cases_rollmean)) %>%
   select(date,total_cases,total_lag_cases,lag_cases_rollmean) %>%
