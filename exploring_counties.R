@@ -147,7 +147,7 @@ col_vec <- c(col_vec_collapse,setNames(object = rep("gray10",3),nm = c("New York
 all_country <- all_country %>%
   mutate(rolling_mean = zoo::rollmean(lag_cases,7,na.pad=T))
 
-
+y_breaks <- seq(0,max(all_country$lag_cases),by = 2.5e4)
 
 all_states <- ggplot(data = all_country) + 
   # geom_bar(aes(x=date,y=lag_cases),stat="identity",alpha=0.5,fill="black") + 
@@ -162,7 +162,7 @@ all_states <- ggplot(data = all_country) +
   coord_cartesian(xlim=as.Date(c("2020-03-15",max(nytimes_county$date)))) + 
   scale_x_date(date_labels = "%b %d",date_breaks = "14 days") +
   scale_fill_manual(values = col_vec_collapse, name="State") + 
-  scale_y_continuous(labels = scales::comma) + 
+  scale_y_continuous(labels = scales::comma,breaks=y_breaks) + 
   theme(axis.text.x = element_text(angle = 25,hjust = 1,vjust = 1)) +
   labs(y="Total new cases per day", 
        x= "Date", 

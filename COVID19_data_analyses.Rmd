@@ -1,0 +1,206 @@
+---
+title: "COVID19 data analyses"
+author: "Vincent L. Cannataro, Ph.D."
+date: 'Last update `r format(Sys.Date(), "%Y-%B-%d")`'
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r build useful analyses, echo=F,message=F,warning=F}
+# before knitting a full HTML, I used to run various scripts
+source("exploring_counties.R")
+source("analyses/cases_V_day_of_week.R")
+source("analyses/MA_data_plots.R")
+source("analyses/New_England_states.R")
+```
+
+
+This site compiles the various analyses and plots that have been useful for sharing. For more information, see [About]. 
+
+# National trends
+
+```{r, echo=F,message=F}
+# all_country generated in exploring_counties.R
+all_country %>% 
+  mutate(rolling_mean = round(rolling_mean, 1)) %>%
+  rename(`New daily cases` = lag_cases, 
+         `Rolling mean daily cases, 7-day` = rolling_mean,
+         Date = date) %>%
+  ggplot() +
+  geom_bar(aes(x=Date,y=`New daily cases`),stat="identity") + 
+  geom_line(aes(x=Date,y=`Rolling mean daily cases, 7-day`),
+            color="red",size=2,lineend = "round",linetype=1) + 
+  theme_bw() +
+  coord_cartesian(xlim=as.Date(c("2020-03-15",max(nytimes_county$date)))) + 
+  scale_x_date(date_labels = "%b %d",date_breaks = "14 days") +
+  scale_y_continuous(labels = scales::comma,breaks=y_breaks) + 
+  theme(axis.text.x = element_text(angle = 25,hjust = 1,vjust = 1)) +
+  labs(y="Total new cases per day", 
+       x= "Date", 
+       title = "Total new daily COVID19 cases in the USA, \nred line is the 7-day rolling mean",
+       subtitle="Red line indicates 7-day new cases rolling average",
+       caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro https://github.com/vcannataro/COVID19_data_explore") ->
+  all_states_first
+
+plotly::ggplotly(all_states_first) 
+```
+
+```{r data table with nation-wide data, echo=F}
+
+all_country %>% 
+  arrange(desc(date)) %>%
+  mutate(rolling_mean = round(rolling_mean,1)) %>%
+  rename(Date = date,
+         `Cumulative cases` = total_cases,
+         `New daily cases` = lag_cases, 
+         `New daily cases, 7-day rolling mean` = rolling_mean) %>%
+  DT::datatable(caption = "COVID19 case data within the USA, 
+                data from the NYTimes (see About section)")
+
+```
+
+
+Why do reported new daily cases fluctuate by the day of the week? This has been [attributed](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7363007/) to fluctuations in the daily variation in testing. Typically, reported cases are higher Thursday, Friday, and Saturday because testing is available early in the week. Testing may not be available on the weekend in many locations, leading to lower reporting early in the week. 
+
+```{r, echo=F,warning=F, message=F}
+nytimes_data_lagged_state <- nytimes_county %>%
+  group_by(state,date) %>%
+  summarize(total_state = sum(cases)) %>%
+  arrange(state,date) %>%
+  group_by(state) %>%
+  mutate(lag_cases = total_state - dplyr::lag(total_state,default = 0)) %>%
+  filter(lag_cases >= 0) 
+
+
+nytimes_data_lagged_state$`Day of the week` <- lubridate::wday(nytimes_data_lagged_state$date,
+                                                  label = TRUE, abbr = FALSE)
+
+
+
+ggplot(data = nytimes_data_lagged_state) + 
+  geom_bar(aes(x=date,y=lag_cases,fill=`Day of the week`),stat= "identity") + 
+  theme_bw() + 
+  # coord_cartesian(xlim=as.Date(c("2020-03-15",max(nytimes_data_lagged_state$date)))) +
+  labs(y="Total new cases per day", 
+       x= "Date", 
+       title = "Total new COVID19 cases per day in the USA",
+       caption = paste("Data: The New York Times, https://github.com/nytimes/covid-19-data
+       Plot: @VinCannataro","https://github.com/vcannataro/COVID19_data_explore")) + 
+  scale_x_date(date_breaks = "1 week",limits = lubridate::ymd("2020-09-01",lubridate::today())) + 
+  theme(axis.text.x = element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+
+
+
+
+## Nation-wide vs. state-by-state
+
+Here, I explore how individual states contribute to the total USA case count. I focus on MA, NY, and NJ because 1) this is where cases were high early in the epidemic and 2) many of my friends and family live in these states.  
+
+```{r, warning=F,message=F, echo=F}
+all_states
+```
+
+```{r, warning=F,message=F, echo=F}
+each_state
+```
+
+# New England
+
+```{r, echo=F,warning=F,message=F}
+NE_states_plot
+```
+
+
+
+
+# Massachusetts
+
+
+```{r, echo=F, warning=F, message=F}
+# TODO: to account for anomalies we need to have a separate variable for 
+# true reported cases (even negative) to cumsum() over. 
+nytimes_data_lagged <- nytimes_county %>%
+  group_by(state,county) %>%
+  mutate(lag_cases = cases - dplyr::lag(cases,default = 0)) %>%
+  filter(lag_cases >= 0) %>%
+  # filter(county != "Unknown") %>%
+  mutate(county = dplyr::recode(county, Unknown = "County not specified")) %>%
+  mutate(lag_cases_rollmean = zoo::rollmean(x = lag_cases,7,na.pad=T))
+
+just_MA <- nytimes_data_lagged %>% 
+  filter(state=="Massachusetts") %>% 
+  group_by(date) %>%
+  summarize(total_lag_cases = sum(lag_cases)) %>%
+  ungroup() %>%
+  mutate(lag_cases_rollmean = zoo::rollmean(x = total_lag_cases,7,na.pad=T))
+
+MA_cumulative <- nytimes_county %>%
+  filter(state == "Massachusetts") %>% 
+  group_by(date) %>%
+  summarize(total_cases = sum(cases))
+
+
+just_MA %>% 
+  left_join(x = just_MA,y = MA_cumulative,by = "date") %>%
+  mutate(total_cases = cumsum(total_lag_cases)) %>%
+  arrange(desc(date)) %>%
+  mutate(lag_cases_rollmean = round(lag_cases_rollmean)) %>%
+  select(date,total_cases,total_lag_cases,lag_cases_rollmean) %>%
+  rename(Date = date,
+         `Cumulative cases` = total_cases,
+         `New daily cases` = total_lag_cases, 
+         `New daily cases, 7-day rolling mean` = lag_cases_rollmean) %>%
+  DT::datatable(caption = "COVID19 cases in MA. See note below for anomaly information")
+```
+
+
+In the NYTimes [anomaly notes](https://www.nytimes.com/interactive/2020/us/massachusetts-coronavirus-cases.html#anomaly-notes) they describe the various anomalies that occurred in MA data collection and reporting—including things like releases of backlogs of data (causing large spikes) and dates of system maintenance (causing missing data for a day). They also describe incidents of MA state revising its methodology for case counts, leading to a "decrease" in new daily case numbers as they adjust their overall numbers on that specific day. For more information, see the [anomaly notes](https://www.nytimes.com/interactive/2020/us/massachusetts-coronavirus-cases.html#anomaly-notes).  
+
+
+```{r, echo=F, message=F, warning=F}
+just_MA %>%
+  mutate(lag_cases_rollmean = round(lag_cases_rollmean)) %>%
+  rename(Date = date, 
+         `New daily cases` = total_lag_cases, 
+         `Rolling mean daily cases, 7-day` = lag_cases_rollmean) %>%
+ggplot() + 
+  geom_bar(aes(x=Date,y=`New daily cases`),stat="identity") + 
+  # geom_segment(data = just_MA_last_date,
+               # aes(x=date-5, y=total_lag_cases+1500,yend=total_lag_cases,xend=date),alpha=0.4,color="blue") + 
+  # geom_label(data = just_MA_last_date, 
+             # aes(x=date-5, y=total_lag_cases+1500,label=paste(total_lag_cases,"\nnew cases"))) +
+  theme_bw() + 
+  scale_x_date(date_breaks = "2 weeks",date_labels = "%b %d",limits = lubridate::ymd("2020-03-01",lubridate::today())) + 
+  theme(axis.text.x = element_text(angle = 45,hjust=1)) + 
+  geom_line(aes(x=Date,y=`Rolling mean daily cases, 7-day`),col="red") + 
+  labs(y="New cases per day in MA", x="Date",title="New cases per day in MA\nRed line indicates 7-day rolling mean", 
+       subtitle="Red line indicates 7-day rolling mean",
+       caption = "Data: The New York Times, https://github.com/nytimes/covid-19-data\nPlot: @VinCannataro https://github.com/vcannataro/COVID19_data_explore") -> 
+  all_MA_plot
+
+plotly::ggplotly(all_MA_plot)
+```
+
+
+For information about the current % positive COVID19 tests in each Boston neighborhood, see the BPHC blog here: https://www.bphc.org/onlinenewsroom/Blog/Lists/Posts/Post.aspx?ID=1282 
+
+# About
+
+Data for these analyses are obtained from the NYTimes.  
+
+Terms of use of the New York Times data here: https://github.com/nytimes/covid-19-data
+
+https://github.com/nytimes/covid-19-data/blob/master/LICENSE
+
+No medical or scientific conclusions should be made using the analyses within this repository.
+
+The code to create this page and the analyses herein can be found at https://github.com/vcannataro/COVID19_data_explore 
