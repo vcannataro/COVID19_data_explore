@@ -106,7 +106,7 @@ ggplot(data = nytimes_data_lagged_state) +
 
 Here, I explore how individual states contribute to the total USA case count. I focus on MA, NY, and NJ because 1) this is where cases were high early in the epidemic and 2) many of my friends and family live in these states.  
 
-```{r, warning=F,message=F, echo=F}
+```{r, warning=F,message=F, echo=F,fig.height=5,fig.width=10}
 all_states
 ```
 
