@@ -110,7 +110,7 @@ Here, I explore how individual states contribute to the total USA case count. I 
 all_states
 ```
 
-```{r, warning=F,message=F, echo=F}
+```{r, warning=F,message=F, echo=F,fig.height=7,fig.width=10}
 each_state
 ```
 
@@ -205,3 +205,5 @@ https://github.com/nytimes/covid-19-data/blob/master/LICENSE
 No medical or scientific conclusions should be made using the analyses within this repository.
 
 The code to create this page and the analyses herein can be found at https://github.com/vcannataro/COVID19_data_explore 
+
+Special dates like Thanksgiving and Christmas have anomalies in reporting. I do *not* currently take this fact into account when generating the 7-day rolling mean. 
