@@ -27,10 +27,11 @@ This site compiles the various analyses and plots that have been useful for shar
 
 # National trends
 
-```{r, echo=F,message=F}
+```{r echo=F, fig.height=6, fig.width=8, message=FALSE}
 # all_country generated in exploring_counties.R
 all_country %>% 
   mutate(rolling_mean = round(rolling_mean, 1)) %>%
+  filter(lag_cases>0) %>%
   rename(`New daily cases` = lag_cases, 
          `Rolling mean daily cases, 7-day` = rolling_mean,
          Date = date) %>%
@@ -40,7 +41,7 @@ all_country %>%
             color="red",size=2,lineend = "round",linetype=1) + 
   theme_bw() +
   coord_cartesian(xlim=as.Date(c("2020-03-15",max(nytimes_county$date)))) + 
-  scale_x_date(date_labels = "%b %d",date_breaks = "14 days") +
+  scale_x_date(date_labels = "%b %d %y",date_breaks = "1 month") +
   scale_y_continuous(labels = scales::comma,breaks=y_breaks) + 
   theme(axis.text.x = element_text(angle = 25,hjust = 1,vjust = 1)) +
   labs(y="Total new cases per day", 
@@ -70,7 +71,7 @@ all_country %>%
 
 Why do reported new daily cases fluctuate by the day of the week? This has been [attributed](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7363007/) to fluctuations in the daily variation in testing. Typically, reported cases are higher Thursday, Friday, and Saturday because testing is available early in the week. Testing may not be available on the weekend in many locations, leading to lower reporting early in the week. 
 
-```{r, echo=F,warning=F, message=F}
+```{r echo=F, fig.height=6, fig.width=8, message=FALSE, warning=FALSE}
 nytimes_data_lagged_state <- nytimes_county %>%
   group_by(state,date) %>%
   summarize(total_state = sum(cases)) %>%
