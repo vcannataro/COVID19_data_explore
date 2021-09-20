@@ -71,7 +71,7 @@ all_country %>%
 
 Why do reported new daily cases fluctuate by the day of the week? This has been [attributed](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7363007/) to fluctuations in the daily variation in testing. Typically, reported cases are higher Thursday, Friday, and Saturday because testing is available early in the week. Testing may not be available on the weekend in many locations, leading to lower reporting early in the week. 
 
-```{r echo=F, fig.height=6, fig.width=8, message=FALSE, warning=FALSE}
+```{r echo=F, fig.height=6, fig.width=14, message=FALSE, warning=FALSE}
 nytimes_data_lagged_state <- nytimes_county %>%
   group_by(state,date) %>%
   summarize(total_state = sum(cases)) %>%
